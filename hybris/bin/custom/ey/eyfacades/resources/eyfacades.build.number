@@ -1,0 +1,11 @@
+#Ant properties
+#Wed Mar 02 13:46:25 CET 2022
+version.api=2105
+vendor=hybris
+group.id=de.hybris.platform
+name=eyfacades
+description=eyfacades
+builddate=20220302 1343
+releasedate=20210809 2305
+version=2105.9
+module.name=platform-module

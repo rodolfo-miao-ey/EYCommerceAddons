@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+ Copyright (c) 2019 SAP SE or an SAP affiliate company. All rights reserved.
+--><extensioninfo xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="extensioninfo.xsd">
+        	
+    
+    <extension abstractclassprefix="Generated" classprefix="EyCore" managername="EyCoreManager" managersuperclass="de.hybris.platform.jalo.extension.Extension" name="eycore">
+                		
+        
+        <!-- you should add all required extensions to this list, except platform 
+			extensions which are automatically required -->
+                		
+        
+        <requires-extension name="acceleratorcms"/>
+                		
+        
+        <coremodule generated="true" manager="br.com.ey.core.jalo.EyCoreManager" packageroot="br.com.ey.core"/>
+                		
+        
+        		
+	
+    
+    </extension>
+        
+
+</extensioninfo>
