@@ -90,7 +90,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
  */
 @Controller
 @RequestMapping("/my-account")
-public class AccountPageController extends AbstractSearchPageController
+public class AccountPageController extends AbstractSearchPageController 
 {
 	private static final String TEXT_ACCOUNT_ADDRESS_BOOK = "text.account.addressBook";
 	private static final String BREADCRUMBS_ATTR = "breadcrumbs";
