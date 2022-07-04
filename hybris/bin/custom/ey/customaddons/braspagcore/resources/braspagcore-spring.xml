@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ Copyright (c) 2021 SAP SE or an SAP affiliate company. All rights reserved.
+-->
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans.xsd
+           http://www.springframework.org/schema/aop
+           http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+    <alias name="defaultBraspagFacade" alias="braspagFacade" />
+    <bean id="defaultBraspagFacade" class="br.com.braspag.facades.impl.DefaultBraspagFacade">
+    </bean>
+
+    <alias name="defaultBraspagSalesService" alias="braspagSalesService" />
+    <bean id="defaultBraspagSalesService" class="br.com.braspag.service.impl.DefaultBraspagSalesService">
+        <property name="restTemplate" ref="braspagRestTemplate"/>
+    </bean>
+
+
+    <bean id="braspagRestTemplate" class="org.springframework.web.client.RestTemplate">
+        <constructor-arg>
+            <bean class="org.springframework.http.client.HttpComponentsClientHttpRequestFactory">
+                <property name="connectTimeout" value="30000" />
+                <property name="readTimeout" value="30000" />
+            </bean>
+        </constructor-arg>
+        <property name="messageConverters">
+            <list>
+                <bean class="org.springframework.http.converter.StringHttpMessageConverter" >
+                    <constructor-arg index="0" name="defaultCharset" value="UTF-8"/>
+                    <property name="supportedMediaTypes">
+                        <list>
+                            <value>application/json;charset=UTF-8</value>
+                        </list>
+                    </property>
+                </bean>
+                <bean class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
+                    <property name="supportedMediaTypes">
+                        <list>
+                            <value>application/json</value>
+                        </list>
+                    </property>
+                </bean>
+            </list>
+        </property>
+    </bean>
+			
+</beans>

@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!--
+ Copyright (c) 2021 SAP SE or an SAP affiliate company. All rights reserved.
+-->
+<!--
+	ATTENTION: This is just an example file. You have to edit it according to your needs.
+-->
+
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="beans.xsd">
+
+	<bean class="de.hybris.platform.commercefacades.order.data.CartData">
+		<property name="braspagPaymentId" type="java.lang.String"/>
+	</bean>
+
+	<!-- Authorization Request -->
+	<bean class="br.com.braspag.payment.data.AuthorizeRequestDTO">
+		<property name="MerchantOrderId" type="java.lang.String"/>
+		<property name="Customer" type="br.com.braspag.payment.data.CustomerInfoDTO"/>
+		<property name="Payment" type="br.com.braspag.payment.data.PaymentInfoDTO"/>
+	</bean>
+
+	<bean class="br.com.braspag.payment.data.CustomerInfoDTO">
+		<import type="com.fasterxml.jackson.annotation.JsonProperty"/>
+		<property name="Name" type="java.lang.String">
+			<annotations>@JsonProperty("Name")</annotations>
+		</property>
+		<property name="Identity" type="java.lang.String">
+			<annotations>@JsonProperty("Identity")</annotations>
+		</property>
+		<property name="IdentityType" type="java.lang.String"/>
+		<property name="Email" type="java.lang.String"/>
+		<property name="Birthdate" type="java.lang.String"/>
+		<property name="Address" type="br.com.braspag.payment.data.AuthorizeRequestAddressInfoDTO" />
+		<property name="DeliveryAddress" type="br.com.braspag.payment.data.AuthorizeRequestDeliveryAddressInfoDTO" />
+	</bean>
+
+	<bean class="br.com.braspag.payment.data.AbstractAddressInfoDTO" abstract="true">
+		<import type="com.fasterxml.jackson.annotation.JsonProperty"/>
+		<property name="Street" type="java.lang.String">
+			<annotations>@JsonProperty("Street")</annotations>
+		</property>
+		<property name="Number" type="java.lang.String">
+			<annotations>@JsonProperty("Number")</annotations>
+		</property>
+		<property name="Complement" type="java.lang.String">
+			<annotations>@JsonProperty("Complement")</annotations>
+		</property>
+		<property name="ZipCode" type="java.lang.String">
+			<annotations>@JsonProperty("ZipCode")</annotations>
+		</property>
+		<property name="City" type="java.lang.String">
+			<annotations>@JsonProperty("City")</annotations>
+		</property>
+		<property name="State" type="java.lang.String">
+			<annotations>@JsonProperty("State")</annotations>
+		</property>
+		<property name="Country" type="java.lang.String" >
+			<annotations>@JsonProperty("Country")</annotations>
+		</property>
+		<property name="District" type="java.lang.String" >
+			<annotations>@JsonProperty("District")</annotations>
+		</property>
+	</bean>
+
+	<bean class="br.com.braspag.payment.data.AuthorizeRequestAddressInfoDTO" extends="br.com.braspag.payment.data.AbstractAddressInfoDTO">
+	</bean>
+
+	<bean class="br.com.braspag.payment.data.AuthorizeRequestDeliveryAddressInfoDTO" extends="br.com.braspag.payment.data.AbstractAddressInfoDTO">
+	</bean>
+
+	<bean class="br.com.braspag.payment.data.PaymentInfoDTO">
+		<import type="com.fasterxml.jackson.annotation.JsonIgnoreProperties" />
+		<import type="com.fasterxml.jackson.annotation.JsonProperty"/>
+		<import type="com.fasterxml.jackson.annotation.JsonInclude" />
+		<import type="com.fasterxml.jackson.annotation.JsonInclude.Include" />
+		<annotations>
+			@JsonIgnoreProperties(ignoreUnknown = true)
+			@JsonInclude(Include.NON_EMPTY)
+		</annotations>
+		<property name="Installments" type="java.lang.Integer">
+			<annotations>@JsonProperty("Installments")</annotations>
+		</property>
+		<property name="Interest" type="java.lang.String">
+			<annotations>@JsonProperty("Interest")</annotations>
+		</property>
+		<property name="Capture" type="java.lang.Boolean">
+			<annotations>@JsonProperty("Capture")</annotations>
+		</property>
+		<property name="Authenticate" type="java.lang.Boolean">
+			<annotations>@JsonProperty("Authenticate")</annotations>
+		</property>
+		<property name="Recurrent" type="java.lang.Boolean">
+			<annotations>@JsonProperty("Recurrent")</annotations>
+		</property>
+		<property name="SoftDescriptor" type="java.lang.String">
+			<annotations>@JsonProperty("SoftDescriptor")</annotations>
+		</property>
+		<property name="DoSplit" type="java.lang.Boolean">
+			<annotations>@JsonProperty("DoSplit")</annotations>
+		</property>
+		<property name="CreditCard" type="br.com.braspag.payment.data.CreditCardInfoDTO" >
+			<annotations>@JsonProperty("CreditCard")</annotations>
+		</property>
+		<property name="Credentials" type="br.com.braspag.payment.data.CredentialsInfoDTO" >
+			<annotations>@JsonProperty("Credentials")</annotations>
+		</property>
+		<property name="Type" type="java.lang.String">
+			<annotations>@JsonProperty("Type")</annotations>
+		</property>
+		<property name="Amount" type="java.lang.Integer">
+			<annotations>@JsonProperty("Amount")</annotations>
+		</property>
+		<property name="Currency" type="java.lang.String">
+			<annotations>@JsonProperty("Currency")</annotations>
+		</property>
+		<property name="Country" type="java.lang.String">
+			<annotations>@JsonProperty("Country")</annotations>
+		</property>
+		<!-- Response fields below -->
+		<property name="ProofOfSale" type="java.lang.String">
+			<annotations>
+				@JsonInclude(JsonInclude.Include.NON_NULL)
+				@JsonProperty("ProofOfSale")
+			</annotations>
+		</property>
+		<property name="AcquirerTransactionId" type="java.lang.String">
+			<annotations>
+				@JsonInclude(JsonInclude.Include.NON_NULL)
+				@JsonProperty("AcquirerTransactionId")
+			</annotations>
+		</property>
+		<property name="AuthorizationCode" type="java.lang.String">
+			<annotations>
+				@JsonInclude(JsonInclude.Include.NON_NULL)
+				@JsonProperty("AuthorizationCode")
+			</annotations>
+		</property>
+		<property name="PaymentId" type="java.lang.String">
+			<annotations>
+				@JsonInclude(JsonInclude.Include.NON_NULL)
+				@JsonProperty("PaymentId")
+			</annotations>
+		</property>
+		<property name="ReceivedDate" type="java.lang.String">
+			<annotations>
+				@JsonInclude(JsonInclude.Include.NON_NULL)
+				@JsonProperty("ReceivedDate")
+			</annotations>
+		</property>
+		<property name="CapturedAmount" type="java.lang.Integer">
+			<annotations>
+				@JsonInclude(JsonInclude.Include.NON_NULL)
+				@JsonProperty("CapturedAmount")
+			</annotations>
+		</property>
+		<property name="CapturedDate" type="java.lang.String">
+			<annotations>
+				@JsonInclude(JsonInclude.Include.NON_NULL)
+				@JsonProperty("CapturedDate")
+			</annotations>
+		</property>
+		<property name="Provider" type="java.lang.String">
+			<annotations>
+				@JsonInclude(JsonInclude.Include.NON_NULL)
+				@JsonProperty("Provider")
+			</annotations>
+		</property>
+		<property name="ReasonCode" type="java.lang.Integer">
+			<annotations>
+				@JsonInclude(JsonInclude.Include.NON_NULL)
+				@JsonProperty("ReasonCode")
+			</annotations>
+		</property>
+		<property name="ReasonMessage" type="java.lang.String">
+			<annotations>
+				@JsonInclude(JsonInclude.Include.NON_NULL)
+				@JsonProperty("ReasonMessage")
+			</annotations>
+		</property>
+		<property name="Status" type="java.lang.Integer	">
+			<annotations>
+				@JsonInclude(JsonInclude.Include.NON_NULL)
+				@JsonProperty("Status")
+			</annotations>
+		</property>
+		<property name="ProviderReturnCode" type="java.lang.String">
+			<annotations>
+				@JsonInclude(JsonInclude.Include.NON_NULL)
+				@JsonProperty("ProviderReturnCode")
+			</annotations>
+		</property>
+		<property name="ProviderReturnMessage" type="java.lang.String">
+			<annotations>
+				@JsonInclude(JsonInclude.Include.NON_NULL)
+				@JsonProperty("ProviderReturnMessage")
+			</annotations>
+		</property>
+	</bean>
+
+	<bean class="br.com.braspag.payment.data.CreditCardInfoDTO">
+		<import type="com.fasterxml.jackson.annotation.JsonProperty"/>
+		<property name="CardNumber" type="java.lang.String">
+			<annotations>@JsonProperty("CardNumber")</annotations>
+		</property>
+		<property name="Holder" type="java.lang.String">
+			<annotations>@JsonProperty("Holder")</annotations>
+		</property>
+		<property name="ExpirationDate" type="java.lang.String">
+			<annotations>@JsonProperty("ExpirationDate")</annotations>
+		</property>
+		<property name="SecurityCode" type="java.lang.String">
+			<annotations>@JsonProperty("SecurityCode")</annotations>
+		</property>
+		<property name="Brand" type="java.lang.String">
+			<annotations>@JsonProperty("Brand")</annotations>
+		</property>
+		<property name="Alias" type="java.lang.String">
+			<annotations>@JsonProperty("Alias")</annotations>
+		</property>
+	</bean>
+
+	<bean class="br.com.braspag.payment.data.CredentialsInfoDTO">
+		<import type="com.fasterxml.jackson.annotation.JsonProperty"/>
+		<property name="Code" type="java.lang.String">
+			<annotations>@JsonProperty("Code")</annotations>
+		</property>
+		<property name="Key" type="java.lang.String">
+			<annotations>@JsonProperty("Key")</annotations>
+		</property>
+	</bean>
+
+	<!-- Authorization Response -->
+	<bean class="br.com.braspag.payment.data.AuthorizeResponseDTO">
+		<import type="com.fasterxml.jackson.annotation.JsonIgnoreProperties" />
+		<import type="com.fasterxml.jackson.annotation.JsonProperty"/>
+
+		<property name="MerchantOrderId" type="java.lang.String">
+			<annotations>@JsonProperty("MerchantOrderId")</annotations>
+		</property>
+		<property name="Customer" type="br.com.braspag.payment.data.CustomerInfoDTO">
+			<annotations>@JsonProperty("Customer")</annotations>
+		</property>
+		<property name="Payment" type="br.com.braspag.payment.data.PaymentInfoDTO">
+			<annotations>@JsonProperty("Payment")</annotations>
+		</property>
+	</bean>
+
+	<!-- Response -->
+	<bean class="br.com.braspag.payment.data.ResponseDTO" abstract="true">
+		<import type="com.fasterxml.jackson.annotation.JsonProperty"/>
+
+		<property name="Status" type="java.lang.Integer">
+			<annotations>@JsonProperty("Status")</annotations>
+		</property>
+		<property name="ReasonCode" type="java.lang.Integer">
+			<annotations>@JsonProperty("ReasonCode")</annotations>
+		</property>
+		<property name="ReasonMessage" type="java.lang.String">
+			<annotations>@JsonProperty("ReasonMessage")</annotations>
+		</property>
+		<property name="ProviderReturnCode" type="java.lang.String">
+			<annotations>@JsonProperty("ProviderReturnCode")</annotations>
+		</property>
+		<property name="ProviderReturnMessage" type="java.lang.String">
+			<annotations>@JsonProperty("ProviderReturnMessage")</annotations>
+		</property>
+	</bean>
+
+
+	<bean class="de.hybris.platform.commercefacades.user.data.AddressData">
+		<property name="remarks" type="String"/>
+	</bean>
+
+	<!-- Void Response -->
+	<bean class="br.com.braspag.payment.data.VoidResponseDTO" extends="ResponseDTO">
+	</bean>
+
+	<!-- BraspagAuthorization POJO -->
+	<bean class="br.com.braspag.payment.data.BraspagAuthorizationPojo">
+		<property name="merchantKey" type="java.lang.String"/>
+		<property name="merchantId" type="java.lang.String"/>
+	</bean>
+
+</beans>

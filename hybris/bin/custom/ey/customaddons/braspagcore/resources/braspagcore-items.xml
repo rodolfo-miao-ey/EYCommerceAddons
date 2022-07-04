@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!--
+ Copyright (c) 2021 SAP SE or an SAP affiliate company. All rights reserved.
+-->
+<!--
+	ATTENTION: This is just an example file. You have to edit it according to your needs.
+-->
+
+<items 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+			xsi:noNamespaceSchemaLocation="items.xsd">
+
+	<enumtypes>
+		<enumtype code="BraspagPaymentStatus">
+			<value code="NOT_SET" />
+			<value code="AUTHORIZED" />
+			<value code="NOT_AUTHORIZED" />
+			<value code="CAPTURED" />
+			<value code="FAILED_CAPTURED" />
+			<value code="VOID" />
+		</enumtype>
+	</enumtypes>
+
+	<itemtypes>
+
+		<typegroup name="BaseStore">
+			<itemtype code="BaseStore" autocreate="false" generate="false">
+				<attributes>
+					<attribute autocreate="true" qualifier="braspagAPIEndpoint" type="java.lang.String">
+						<description>Braspag Endpoint API</description>
+						<persistence type="property"/>
+					</attribute>
+					<attribute autocreate="true" qualifier="braspagProvider" type="java.lang.String">
+						<description>Braspag provider</description>
+						<persistence type="property"/>
+					</attribute>
+					<attribute autocreate="true" qualifier="braspagMerchantId" type="java.lang.String">
+						<description>Braspag Merchant ID</description>
+						<persistence type="property"/>
+					</attribute>
+					<attribute autocreate="true" qualifier="braspagMerchantKey" type="java.lang.String">
+						<modifiers read="true" write="true" search="true" initial="true" optional="false"/>
+						<persistence type="property"/>
+					</attribute>
+				</attributes>
+			</itemtype>
+		</typegroup>
+
+		<typegroup name="BraspagCustom">
+			<itemtype code="CreditCardPaymentInfo" autocreate="false"
+					  generate="false">
+				<description>Extending CreditCardPaymentInfo type with additional attributes.</description>
+				<attributes>
+					<attribute autocreate="true" qualifier="braspagPaymentId" type="java.lang.String">
+						<modifiers read="true" write="true" search="true" optional="true"/>
+						<persistence type="property"/>
+					</attribute>
+					<attribute autocreate="true" qualifier="braspagStatus" type="java.lang.Integer">
+						<modifiers read="true" write="true" search="true" optional="true"/>
+						<persistence type="property"/>
+					</attribute>
+					<attribute autocreate="true" qualifier="braspagReasonCode" type="java.lang.Integer">
+						<modifiers read="true" write="true" search="true" optional="true"/>
+						<persistence type="property"/>
+					</attribute>
+					<attribute autocreate="true" qualifier="braspagReasonMessage" type="java.lang.String">
+						<modifiers read="true" write="true" search="true" optional="true"/>
+						<persistence type="property"/>
+					</attribute>
+					<attribute autocreate="true" qualifier="braspagProviderReturnCode" type="java.lang.String">
+						<modifiers read="true" write="true" search="true" optional="true"/>
+						<persistence type="property"/>
+					</attribute>
+					<attribute autocreate="true" qualifier="braspagProviderReturnMessage" type="java.lang.String">
+						<modifiers read="true" write="true" search="true" optional="true"/>
+						<persistence type="property"/>
+					</attribute>
+					<attribute autocreate="true" qualifier="braspagPaymentStatus" type="BraspagPaymentStatus">
+						<modifiers read="true" write="true" search="true" optional="true"/>
+						<persistence type="property"/>
+					</attribute>
+					<attribute autocreate="true" qualifier="braspagAuthCode" type="java.lang.String">
+						<description>Credit Card payment auth code</description>
+						<persistence type="property"/>
+					</attribute>
+					<attribute autocreate="true" qualifier="braspagNsuCode" type="java.lang.String">
+						<description>Credit Card NSU code</description>
+						<persistence type="property"/>
+					</attribute>
+					<attribute autocreate="true" qualifier="braspagCardBrand" type="java.lang.String">
+						<description>Credit Card Type</description>
+						<persistence type="property"/>
+					</attribute>
+					<attribute autocreate="true" qualifier="braspagCardHolder" type="java.lang.String">
+						<description>Credit Card holder name</description>
+						<persistence type="property"/>
+					</attribute>
+					<attribute autocreate="true" qualifier="braspagCardNumber" type="java.lang.String">
+						<persistence type="property"/>
+					</attribute>
+					<attribute autocreate="true" qualifier="braspagExpiryMonth" type="java.lang.String">
+						<persistence type="property"/>
+					</attribute>
+					<attribute autocreate="true" qualifier="braspagExpiryYear" type="java.lang.String">
+						<persistence type="property"/>
+					</attribute>
+					<attribute autocreate="true" qualifier="braspagIssuerId" type="java.lang.String">
+						<persistence type="property"/>
+					</attribute>
+					<attribute autocreate="true" qualifier="braspagInstallments" type="java.lang.Integer">
+						<description>Credit Card Installments</description>
+						<persistence type="property"/>
+					</attribute>
+					<attribute autocreate="true" qualifier="braspagTotalValue" type="java.lang.Double">
+						<description>Credit Card Total Value</description>
+						<persistence type="property"/>
+					</attribute>
+					<attribute autocreate="true" qualifier="braspagMerchantId" type="java.lang.String">
+						<description>Credit Card MerchantId</description>
+						<persistence type="property"/>
+					</attribute>
+					<attribute autocreate="true" qualifier="braspagMerchantKey" type="java.lang.String">
+						<description>Credit Card MerchantKey</description>
+						<persistence type="property"/>
+					</attribute>
+					<attribute autocreate="true" qualifier="braspagReceivedDate" type="java.lang.String">
+						<description>Credit Card ReceivedDate</description>
+						<persistence type="property"/>
+					</attribute>
+				</attributes>
+			</itemtype>
+
+			<itemtype code="OrderPaymentLogInfo" generate="true" autocreate="true">
+				<deployment table="OrderPaymentLogInfo" typecode="17004"/>
+				<attributes>
+					<attribute autocreate="true" qualifier="dateTime" type="java.lang.Long">
+						<modifiers read="true" write="true" search="true" optional="false" initial="true" unique="true"/>
+						<persistence type="property"/>
+					</attribute>
+					<attribute autocreate="true" qualifier="orderCode" type="java.lang.String">
+						<modifiers read="true" write="true" search="true" optional="false" initial="true" unique="true"/>
+						<persistence type="property"/>
+					</attribute>
+					<attribute autocreate="true" qualifier="integrationStatus" type="java.lang.String">
+						<modifiers read="true" write="true" search="true" optional="true"/>
+						<persistence type="property"/>
+					</attribute>
+					<attribute qualifier="message" type="java.lang.String">
+						<description>Attribute contains body that is used to progress with payment.</description>
+						<modifiers read="true" write="true" search="true"/>
+						<persistence type="property">
+							<columntype database="oracle">
+								<value>CLOB</value>
+							</columntype>
+							<columntype database="mysql">
+								<value>TEXT</value>
+							</columntype>
+							<columntype database="sqlserver">
+								<value>TEXT</value>
+							</columntype>
+							<columntype database="hsqldb">
+								<value>LONGVARCHAR</value>
+							</columntype>
+							<columntype database="sap">
+								<value>NCLOB</value>
+							</columntype>
+						</persistence>
+					</attribute>
+					<attribute autocreate="true" qualifier="cardNumber" type="java.lang.String">
+						<modifiers read="true" write="true" search="true" optional="true"/>
+						<persistence type="property"/>
+					</attribute>
+					<attribute autocreate="true" qualifier="installments" type="java.lang.String">
+						<modifiers read="true" write="true" search="true" optional="true"/>
+						<persistence type="property"/>
+					</attribute>
+					<attribute autocreate="true" qualifier="cardHolder" type="java.lang.String">
+						<modifiers read="true" write="true" search="true" optional="true"/>
+						<persistence type="property"/>
+					</attribute>
+					<attribute autocreate="true" qualifier="cardBrand" type="java.lang.String">
+						<modifiers read="true" write="true" search="true" optional="true"/>
+						<persistence type="property"/>
+					</attribute>
+					<attribute autocreate="true" qualifier="expiryMonth" type="java.lang.String">
+						<modifiers read="true" write="true" search="true" optional="true"/>
+						<persistence type="property"/>
+					</attribute>
+					<attribute autocreate="true" qualifier="expiryYear" type="java.lang.String">
+						<modifiers read="true" write="true" search="true" optional="true"/>
+						<persistence type="property"/>
+					</attribute>
+					<attribute autocreate="true" qualifier="documentNumber" type="java.lang.String">
+						<modifiers read="true" write="true" search="true" optional="true"/>
+						<persistence type="property"/>
+					</attribute>
+					<attribute autocreate="true" qualifier="documentType" type="java.lang.String">
+						<modifiers read="true" write="true" search="true" optional="true"/>
+						<persistence type="property"/>
+					</attribute>
+					<attribute autocreate="true" qualifier="amount" type="java.lang.String">
+						<modifiers read="true" write="true" search="true" optional="true"/>
+						<persistence type="property"/>
+					</attribute>
+				</attributes>
+			</itemtype>
+
+			<itemtype code="AbstractOrder" generate="false" autocreate="false">
+				<attributes>
+					<attribute autocreate="true" qualifier="creditCardGatewayCount" type="java.lang.Integer">
+						<description>Count for total tries for Credit Card gateway integration.</description>
+						<persistence type="property"/>
+						<modifiers read="true" write="true" search="true" optional="true"/>
+						<defaultvalue>0</defaultvalue>
+					</attribute>
+				</attributes>
+			</itemtype>
+		</typegroup>
+
+	</itemtypes>
+
+</items>
