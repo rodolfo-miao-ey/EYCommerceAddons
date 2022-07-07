@@ -33,11 +33,11 @@ def platform = platform {
         property 'yb2bacceleratorstorefront.illegalrequirementstest.excluded', 'true'
         property 'multicountrysampledataaddon.import.active', 'false'
         property 'occ.rewrite.overlapping.paths.enabled', 'true' // for being able to run B2C & B2B alongside each other
-        property 'db.url',      'jdbc:sqlserver://localhost:1433;databaseName=eycommerce;responseBuffering=adaptive;loginTimeout=10'
-        property 'db.driver',   'com.microsoft.sqlserver.jdbc.SQLServerDriver'
-        property 'db.username', 'sa'
-        property 'db.password', 'VSF4yrmi'
-        property 'db.tableprefix', ''
+  //      property 'db.url',      'jdbc:sqlserver://localhost:1433;databaseName=eycommerce;responseBuffering=adaptive;loginTimeout=10'
+  //      property 'db.driver',   'com.microsoft.sqlserver.jdbc.SQLServerDriver'
+  //      property 'db.username', 'sa'
+  //      property 'db.password', 'VSF4yrmi'
+  //      property 'db.tableprefix', ''
         property 'backoffice.solr.search.index.autoinit', 'false'
     }
 
@@ -356,7 +356,7 @@ def platform = platform {
             extName 'warehousingbackoffice'
             extName 'warehousingfacades'
             extName 'warehousingwebservices'
-            extName 'yacceleratorordermanagement'
+        //    extName 'yacceleratorordermanagement'
         // personalization
             extName 'personalizationcms'
             extName 'personalizationcmsbackoffice'
