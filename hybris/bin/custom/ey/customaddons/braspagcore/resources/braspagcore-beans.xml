@@ -269,6 +269,7 @@
 
 	<bean class="de.hybris.platform.commercefacades.user.data.AddressData">
 		<property name="remarks" type="String"/>
+		<property name="streetNumber" type="java.lang.String"/>
 	</bean>
 
 	<!-- Void Response -->
@@ -279,6 +280,21 @@
 	<bean class="br.com.braspag.payment.data.BraspagAuthorizationPojo">
 		<property name="merchantKey" type="java.lang.String"/>
 		<property name="merchantId" type="java.lang.String"/>
+	</bean>
+
+
+	<bean class="br.com.braspag.facades.order.data.BrasPagPaymentMethodData">
+		<property name="cardNumber" type="java.lang.String"/>
+		<property name="cardHolder" type="java.lang.String"/>
+		<property name="installments" type="java.lang.Integer"/>
+		<property name="securityCode" type="java.lang.String"/>
+		<property name="expiryMonth" type="java.lang.String"/>
+		<property name="expiryYear" type="java.lang.String"/>
+		<property name="amount" type="java.lang.Double"/>
+		<property name="documentType" type="java.lang.String"/>
+		<property name="documentNumber" type="java.lang.String"/>
+		<property name="cardBrand" type="java.lang.String"/>
+		<property name="purchaseOrderNumberCard" type="java.lang.String"/>
 	</bean>
 
 </beans>
