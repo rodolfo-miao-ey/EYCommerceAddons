@@ -29,148 +29,80 @@
 
                                 <div class="headline"><spring:theme code="checkout.multi.paymentMethod"/></div>
 
-                                <c:if test="${not empty paymentFormUrl}">
-                                    <ycommerce:testId code="paymentDetailsForm">
+                           <form:form id="braspagPaymentForm" name="braspagPaymentForm" modelAttribute="braspagPaymentForm"
+                               action="${request.contextPath}/checkout/multi/payment-method/credit" method="POST">
 
-                                        <form:form id="silentOrderPostForm" name="silentOrderPostForm" modelAttribute="sopPaymentDetailsForm" action="${paymentFormUrl}" method="POST">
-                                            <input type="hidden" name="orderPage_receiptResponseURL" value="${fn:escapeXml(silentOrderPageData.parameters['orderPage_receiptResponseURL'])}"/>
-                                            <input type="hidden" name="orderPage_declineResponseURL" value="${fn:escapeXml(silentOrderPageData.parameters['orderPage_declineResponseURL'])}"/>
-                                            <input type="hidden" name="orderPage_cancelResponseURL" value="${fn:escapeXml(silentOrderPageData.parameters['orderPage_cancelResponseURL'])}"/>
-                                            <c:forEach items="${sopPaymentDetailsForm.signatureParams}" var="entry" varStatus="status">
-                                                <input type="hidden" id="${fn:escapeXml(entry.key)}" name="${fn:escapeXml(entry.key)}" value="${fn:escapeXml(entry.value)}"/>
-                                            </c:forEach>
-                                            <c:forEach items="${sopPaymentDetailsForm.subscriptionSignatureParams}" var="entry" varStatus="status">
-                                                <input type="hidden" id="${fn:escapeXml(entry.key)}" name="${fn:escapeXml(entry.key)}" value="${fn:escapeXml(entry.value)}"/>
-                                            </c:forEach>
-                                            <input type="hidden" value="${fn:escapeXml(silentOrderPageData.parameters['billTo_email'])}" name="billTo_email" id="billTo_email">
+                                    <formElement:formInputBox idKey="PurchaseOrderNumberCard" labelKey="payment.purchaseOrderNumberCard"
+                                        path="purchaseOrderNumberCard" inputCSS="form-control" mandatory="true" tabindex="1" />
 
-                                            <div class="form-group">
-                                                <c:if test="${not empty paymentInfos}">
-                                                    <button type="button" class="btn btn-default btn-block js-saved-payments"><spring:theme code="checkout.multi.paymentMethod.addPaymentDetails.useSavedCard"/></button>
-                                                </c:if>
-                                            </div>
+                                    <formElement:formInputBox idKey="card_accountNumber" labelKey="payment.cardNumber"
+                                    path="cardNumber" inputCSS="form-control" mandatory="true" tabindex="3" placeholder="XXXX XXXX XXXX XXXX"
+                                    autocomplete="off" maxlength="2"/>
+                                    <formElement:formSelectBox idKey="card_cardType" selectCSSClass="form-control" labelKey="payment.cardType"
+                                    path="card_cardType" mandatory="true" skipBlank="false" skipBlankMessageKey="payment.cardType.pleaseSelect"
+                                    items="${sopCardTypes}" tabindex="3"/>
+                                    <formElement:formInputBox idKey="card_nameOnCard" labelKey="payment.nameOnCard" path="nameOnCard"
+                                    inputCSS="form-control" tabindex="4" mandatory="true"/>
 
-                                            <div class="form-group">
-                                                <formElement:formSelectBox idKey="card_cardType" labelKey="payment.cardType" path="card_cardType" selectCSSClass="form-control" mandatory="true" skipBlank="false" skipBlankMessageKey="payment.cardType.pleaseSelect" items="${sopCardTypes}" tabindex="1"/>
-                                            </div>
+                                        <fieldset id="document">
 
-                                            <div class="form-group">
-                                                <formElement:formInputBox idKey="card_nameOnCard" labelKey="payment.nameOnCard" path="card_nameOnCard" inputCSS="form-control" tabindex="2" mandatory="false" />
-
-                                            </div>
-
-                                            <div class="form-group">
-                                                <formElement:formInputBox idKey="card_accountNumber" labelKey="payment.cardNumber" path="card_accountNumber" inputCSS="form-control" mandatory="true" tabindex="3" autocomplete="off" />
-                                            </div>
-
-                                            <fieldset id="startDate">
-                                                <label for="" class="control-label"><spring:theme code="payment.startDate"/></label>
-                                                <div class="row">
-                                                    <div class="col-xs-6">
-                                                        <formElement:formSelectBox idKey="StartMonth" selectCSSClass="form-control" labelKey="payment.month" path="card_startMonth" mandatory="true" skipBlank="false" skipBlankMessageKey="payment.month" items="${months}" tabindex="4"/>
-                                                    </div>
-                                                    <div class="col-xs-6">
-                                                        <formElement:formSelectBox idKey="StartYear" selectCSSClass="form-control" labelKey="payment.year" path="card_startYear" mandatory="true" skipBlank="false" skipBlankMessageKey="payment.year" items="${startYears}" tabindex="7"/>
-                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-xs-6">
+                                                    <formElement:formRadioBoxLeft idKey="card_documentType_cpf"
+                                                                                  labelKey="payment.documentType.cpf"
+                                                                                  value="CPF" path="documentType" checked="true"/>
                                                 </div>
-                                            </fieldset>
-
-                                            <fieldset id="cardDate">
-                                                <label for="" class="control-label"><spring:theme code="payment.expiryDate"/></label>
-                                                <div class="row">
-                                                    <div class="col-xs-6">
-                                                        <formElement:formSelectBox idKey="ExpiryMonth" selectCSSClass="form-control" labelKey="payment.month" path="card_expirationMonth" mandatory="true" skipBlank="false" skipBlankMessageKey="payment.month" items="${months}" tabindex="6"/>
-                                                    </div>
-                                                    <div class="col-xs-6">
-                                                        <formElement:formSelectBox idKey="ExpiryYear" selectCSSClass="form-control" labelKey="payment.year" path="card_expirationYear" mandatory="true" skipBlank="false" skipBlankMessageKey="payment.year" items="${expiryYears}" tabindex="7"/>
-                                                    </div>
+                                                <div class="col-xs-6">
+                                                    <formElement:formRadioBoxLeft idKey="card_documentType_cnpj"
+                                                                                  labelKey="payment.documentType.cnpj"
+                                                                                  value="CNPJ"
+                                                                                  path="documentType"/>
                                                 </div>
-                                            </fieldset>
 
-                                            <div class="row">
-                                                <div class="form-group col-xs-6">
-                                                    <formElement:formInputBox idKey="card_cvNumber" labelKey="payment.cvn" path="card_cvNumber" inputCSS="form-control" mandatory="true" tabindex="8" />
-                                                </div>
-                                            </div>
+                                                 <div class="col-xs-12">
+                                                    <formElement:formInputBox idKey="documentNumber" labelKey="payment.documentNumber.cpf"
+                                                    path="documentNumber" inputCSS="form-control" tabindex="5" mandatory="true" maxlength="14"/>
+                                                 </div>
+                                        </fieldset>
 
-                                            <div class="row">
-                                                <div class="form-group col-xs-6">
-                                                    <div id="issueNum">
-                                                        <formElement:formInputBox idKey="card_issueNumber" labelKey="payment.issueNumber" path="card_issueNumber" inputCSS="text" mandatory="false" tabindex="9"/>
-                                                    </div>
-                                                </div>
-                                            </div>
 
-                                            <sec:authorize access="!hasAnyRole('ROLE_ANONYMOUS')">
-                                                <formElement:formCheckbox idKey="savePaymentMethod" labelKey="checkout.multi.sop.savePaymentInfo" path="savePaymentInfo"
-                                                      inputCSS="" labelCSS="" mandatory="false" tabindex="10"/>
-                                            </sec:authorize>
-                            <hr/>
-                            <div class="headline">
-                            <spring:theme code="checkout.multi.paymentMethod.addPaymentDetails.billingAddress"/>
-                        </div>
+                                <fieldset id="cardDate">
+                                    <label for="" class="control-label"><spring:theme code="payment.expiryDate"/></label>
+                                    <div class="row">
+                                        <div class="col-xs-6">
+                                            <formElement:formSelectBox idKey="ExpiryMonth" selectCSSClass="form-control" labelKey="payment.month"
+                                            path="expiryMonth" mandatory="true" skipBlank="false" skipBlankMessageKey="payment.month" items="${months}" tabindex="6"/>
+                                        </div>
+                                        <div class="col-xs-6">
+                                            <formElement:formSelectBox idKey="ExpiryYear" selectCSSClass="form-control" labelKey="payment.year"
+                                            path="expiryYear" mandatory="true" skipBlank="false" skipBlankMessageKey="payment.year" items="${expiryYears}" tabindex="7"/>
+                                        </div>
+                                    </div>
+                                </fieldset>
 
-                        <c:if test="${cartData.deliveryItemsQuantity > 0}">
-                            <div id="useDeliveryAddressData"
-                                data-title="${fn:escapeXml(deliveryAddress.title)}"
-                                data-firstname="${fn:escapeXml(deliveryAddress.firstName)}"
-                                data-lastname="${fn:escapeXml(deliveryAddress.lastName)}"
-                                data-line1="${fn:escapeXml(deliveryAddress.line1)}"
-                                data-line2="${fn:escapeXml(deliveryAddress.line2)}"
-                                data-town="${fn:escapeXml(deliveryAddress.town)}"
-                                data-postalcode="${fn:escapeXml(deliveryAddress.postalCode)}"
-                                data-countryisocode="${fn:escapeXml(deliveryAddress.country.isocode)}"
-                                data-regionisocode="${fn:escapeXml(deliveryAddress.region.isocodeShort)}"
-                                data-address-id="${fn:escapeXml(deliveryAddress.id)}"
-                            ></div>
-                            <formElement:formCheckbox
-                                path="useDeliveryAddress"
-                                idKey="useDeliveryAddress"
-                                labelKey="checkout.multi.sop.useMyDeliveryAddress"
-                                tabindex="11"/>
-                        </c:if>
-
-                        <input type="hidden" value="${fn:escapeXml(silentOrderPageData.parameters['billTo_email'])}" class="text" name="billTo_email" id="billTo_email">
-                        <address:billAddressFormSelector supportedCountries="${countries}" regions="${regions}" tabindex="12"/>
-                                            <p><spring:theme code="checkout.multi.paymentMethod.seeOrderSummaryForMoreInformation"/></p>
-
-                                            <button type="button"
-                            class="btn btn-primary btn-block submit_silentOrderPostForm checkout-next"><spring:theme code="checkout.multi.paymentMethod.continue"/></button>
-
-                                        </form:form>
-                                    </ycommerce:testId>
-                                </c:if>
-                            </div>
-                        </div>
-
-                        <c:if test="${not empty paymentInfos}">
-                            <div id="savedpayments">
-                                <div id="savedpaymentstitle">
-                                    <div class="headline">
-                                        <span class="headline-text"><spring:theme code="checkout.multi.paymentMethod.addPaymentDetails.useSavedCard"/></span>
+                                <div class="row">
+                                    <div class="form-group col-xs-12">
+                                        <formElement:formInputBox idKey="securityNumber" labelKey="payment.securityNumber"
+                                        path="securityNumber" maxlength="4" inputCSS="form-control" mandatory="true" tabindex="8"/>
                                     </div>
                                 </div>
-                                <div id="savedpaymentsbody">
-                                    <spring:url var="choosePaymentMethod" value="{contextPath}/checkout/multi/payment-method/choose" htmlEscape="false">
-                                        <spring:param name="contextPath" value="${request.contextPath}" />
-                                    </spring:url>
-                                    <c:forEach items="${paymentInfos}" var="paymentInfo" varStatus="status">
-                                        <form action="${fn:escapeXml(choosePaymentMethod)}" method="GET">
-                                            <input type="hidden" name="selectedPaymentMethodId" value="${fn:escapeXml(paymentInfo.id)}"/>
-                                                    <strong>${fn:escapeXml(paymentInfo.billingAddress.firstName)}&nbsp; ${fn:escapeXml(paymentInfo.billingAddress.lastName)}</strong><br/>
-                                                    ${fn:escapeXml(paymentInfo.cardType)}<br/>
-                                                    ${fn:escapeXml(paymentInfo.accountHolderName)}<br/>
-                                                    ${fn:escapeXml(paymentInfo.cardNumber)}<br/>
-                                                    <spring:theme code="checkout.multi.paymentMethod.paymentDetails.expires" arguments="${paymentInfo.expiryMonth},${paymentInfo.expiryYear}"/><br/>
-                                                    ${fn:escapeXml(paymentInfo.billingAddress.line1)}<br/>
-                                                    ${fn:escapeXml(paymentInfo.billingAddress.town)}&nbsp; ${fn:escapeXml(paymentInfo.billingAddress.region.isocodeShort)}<br/>
-                                                    ${fn:escapeXml(paymentInfo.billingAddress.postalCode)}&nbsp; ${fn:escapeXml(paymentInfo.billingAddress.country.isocode)}<br/>
-                                                <button type="submit" class="btn btn-primary btn-block" tabindex="${(status.count * 2) - 1}"><spring:theme code="checkout.multi.paymentMethod.addPaymentDetails.useThesePaymentDetails"/></button>
-                                        </form>
-                                    </c:forEach>
+
+                                <div class="row">
+                                    <div class="form-group col-xs-12">
+                                        <formElement:formSelectBox idKey="paymentInstallmentSelectCard" path="paymentInstallmentCard" skipBlank="false"
+                                            items="${paymentCardInstallments}" mandatory="true"
+                                            selectCSSClass="form-control js-payment-installment-select"
+                                            itemValue="code" itemLabel="name" labelKey="checkout.multi.paymentInstallment.label"
+                                            skipBlankMessageKey="checkout.multi.paymentInstallment.title.pleaseSelect" tabindex="9"/>
+                                    </div>
                                 </div>
-                            </div>
-                        </c:if>
+
+                                <button type="submit" class="btn btn-primary btn-block submit_silentOrderPostForm checkout-next"><spring:theme code="checkout.multi.paymentMethod.continue"/></button>
+
+                            </form:form>
+                        </div>
+                    </div>
+
                     </ycommerce:testId>
                </jsp:body>
 

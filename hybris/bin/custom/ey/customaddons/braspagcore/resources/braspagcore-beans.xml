@@ -104,6 +104,9 @@
 		<property name="Credentials" type="br.com.braspag.payment.data.CredentialsInfoDTO" >
 			<annotations>@JsonProperty("Credentials")</annotations>
 		</property>
+		<property name="FraudAnalysis" type="br.com.braspag.payment.data.FraudAnalysisInfoDTO" >
+			<annotations>@JsonProperty("FraudAnalysis")</annotations>
+		</property>
 		<property name="Type" type="java.lang.String">
 			<annotations>@JsonProperty("Type")</annotations>
 		</property>
@@ -229,6 +232,80 @@
 		</property>
 	</bean>
 
+
+	<bean class="br.com.braspag.payment.data.FraudAnalysisInfoDTO">
+		<import type="com.fasterxml.jackson.annotation.JsonProperty"/>
+		<property name="Sequence" type="java.lang.String">
+			<annotations>@JsonProperty("Sequence")</annotations>
+		</property>
+		<property name="SequenceCriteria" type="java.lang.String">
+			<annotations>@JsonProperty("SequenceCriteria")</annotations>
+		</property>
+		<property name="Provider" type="java.lang.String">
+			<annotations>@JsonProperty("Provider")</annotations>
+		</property>
+		<property name="TotalOrderAmount" type="java.lang.Integer">
+			<annotations>@JsonProperty("TotalOrderAmount")</annotations>
+		</property>
+		<property name="FingerPrintId" type="java.lang.String">
+			<annotations>@JsonProperty("FingerPrintId")</annotations>
+		</property>
+		<property name="Browser" type="br.com.braspag.payment.data.BrowserInfoDTO" >
+			<annotations>@JsonProperty("Browser")</annotations>
+		</property>
+		<property name="Cart" type="br.com.braspag.payment.data.CartInfoDTO" >
+			<annotations>@JsonProperty("Cart")</annotations>
+		</property>
+		<property name="MerchantDefinedFields" type="java.util.List&lt;br.com.braspag.payment.data.MerchantDefinedFieldsInfoDTO>">
+			<annotations>@JsonProperty("MerchantDefinedFields")</annotations>
+		</property>
+
+	</bean>
+
+	<bean class="br.com.braspag.payment.data.BrowserInfoDTO">
+		<import type="com.fasterxml.jackson.annotation.JsonProperty"/>
+		<property name="CookiesAccepted" type="java.lang.Boolean">
+			<annotations>@JsonProperty("CookiesAccepted")</annotations>
+		</property>
+		<property name="IpAddress" type="java.lang.String">
+			<annotations>@JsonProperty("IpAddress")</annotations>
+		</property>
+	</bean>
+
+	<bean class="br.com.braspag.payment.data.CartInfoDTO">
+		<import type="com.fasterxml.jackson.annotation.JsonProperty"/>
+		<property name="Items" type="java.util.List&lt;br.com.braspag.payment.data.ItemsInfoDTO>">
+			<annotations>@JsonProperty("Items")</annotations>
+		</property>
+	</bean>
+
+	<bean class="br.com.braspag.payment.data.ItemsInfoDTO">
+		<import type="com.fasterxml.jackson.annotation.JsonProperty"/>
+		<property name="Name" type="java.lang.String">
+			<annotations>@JsonProperty("Name")</annotations>
+		</property>
+		<property name="Quantity" type="java.lang.Integer">
+			<annotations>@JsonProperty("Quantity")</annotations>
+		</property>
+		<property name="Sku" type="java.lang.String">
+			<annotations>@JsonProperty("Sku")</annotations>
+		</property>
+		<property name="UnitPrice" type="java.lang.Integer">
+			<annotations>@JsonProperty("UnitPrice")</annotations>
+		</property>
+	</bean>
+
+	<bean class="br.com.braspag.payment.data.MerchantDefinedFieldsInfoDTO">
+		<import type="com.fasterxml.jackson.annotation.JsonProperty"/>
+		<property name="Id" type="java.lang.Integer">
+			<annotations>@JsonProperty("Id")</annotations>
+		</property>
+		<property name="Value" type="java.lang.String">
+			<annotations>@JsonProperty("Value")</annotations>
+		</property>
+	</bean>
+
+
 	<!-- Authorization Response -->
 	<bean class="br.com.braspag.payment.data.AuthorizeResponseDTO">
 		<import type="com.fasterxml.jackson.annotation.JsonIgnoreProperties" />
@@ -295,6 +372,13 @@
 		<property name="documentNumber" type="java.lang.String"/>
 		<property name="cardBrand" type="java.lang.String"/>
 		<property name="purchaseOrderNumberCard" type="java.lang.String"/>
+	</bean>
+
+	<bean class="br.com.braspag.facades.order.data.BraspagPaymentModeData">
+		<property name="code" type="java.lang.String"/>
+		<property name="name" type="java.lang.String"/>
+		<property name="description" type="java.lang.String"/>
+		<property name="installment" type="java.lang.Integer"/>
 	</bean>
 
 </beans>

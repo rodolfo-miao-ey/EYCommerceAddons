@@ -9,18 +9,22 @@ import br.com.braspag.enums.BraspagPaymentStatus;
 import br.com.braspag.model.OrderPaymentLogInfoModel;
 //import br.com.whitemartins.core.model.WhiteMartinsPaymentModeModel;
 import br.com.braspag.facades.order.data.BrasPagPaymentMethodData;
+import de.hybris.bootstrap.ddl.dbtypesystem.EnumerationValue;
 import de.hybris.platform.b2b.model.B2BCustomerModel;
 import de.hybris.platform.b2bacceleratorservices.enums.CheckoutPaymentType;
 import de.hybris.platform.commercefacades.user.data.AddressData;
 import de.hybris.platform.commercefacades.user.data.CustomerData;
 import de.hybris.platform.core.enums.CreditCardType;
 import de.hybris.platform.core.enums.PaymentStatus;
+import de.hybris.platform.core.model.enumeration.EnumerationValueModel;
+import de.hybris.platform.core.model.order.AbstractOrderEntryModel;
 import de.hybris.platform.core.model.order.AbstractOrderModel;
 import de.hybris.platform.core.model.order.OrderModel;
 import de.hybris.platform.core.model.order.payment.CreditCardPaymentInfoModel;
 //import de.hybris.platform.core.model.order.payment.PaymentInfoModel;
 import de.hybris.platform.core.model.order.payment.PaymentInfoModel;
 import de.hybris.platform.core.model.user.AddressModel;
+import de.hybris.platform.enumeration.EnumerationService;
 import de.hybris.platform.order.CartService;
 import de.hybris.platform.payment.dto.TransactionStatus;
 import de.hybris.platform.payment.enums.PaymentTransactionType;
@@ -30,6 +34,7 @@ import de.hybris.platform.servicelayer.dto.converter.Converter;
 import de.hybris.platform.servicelayer.model.ModelService;
 import de.hybris.platform.servicelayer.session.SessionService;
 import de.hybris.platform.servicelayer.time.TimeService;
+import de.hybris.platform.servicelayer.type.TypeService;
 import de.hybris.platform.servicelayer.user.UserService;
 import de.hybris.platform.store.BaseStoreModel;
 import de.hybris.platform.store.services.BaseStoreService;
@@ -37,7 +42,9 @@ import org.apache.log4j.Logger;
 import org.apache.commons.lang.StringUtils;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 public class DefaultBraspagFacade implements BraspagFacade {
@@ -71,6 +78,12 @@ public class DefaultBraspagFacade implements BraspagFacade {
 
     @Resource(name = "userService")
     private UserService userService;
+
+    @Resource
+    private TypeService typeService;
+
+    @Resource
+    private EnumerationService enumerationService;
 
     @Override
     public boolean authorizePayment(final AbstractOrderModel cartModel, final CustomerData customerData,
@@ -111,7 +124,7 @@ public class DefaultBraspagFacade implements BraspagFacade {
 
             CreditCardPaymentInfoModel paymentInfoModel = (CreditCardPaymentInfoModel) cartModel.getPaymentInfo();
 
-            if (responseDTO.getPayment() != null && responseDTO.getPayment().getStatus() == BRASPAG_STATUS_CAPTURED){
+            if (responseDTO.getPayment() != null && responseDTO.getPayment().getStatus() == BRASPAG_STATUS_CAPTURED) {
 
                 paymentInfoModel.setBraspagPaymentId(responseDTO.getPayment().getPaymentId());
                 paymentInfoModel.setBraspagStatus(responseDTO.getPayment().getStatus());
@@ -166,7 +179,7 @@ public class DefaultBraspagFacade implements BraspagFacade {
                         expiryYear,
                         documentType,
                         documentNumber,
-                        amount,null);
+                        amount, null);
 
                 return true;
 
@@ -217,21 +230,18 @@ public class DefaultBraspagFacade implements BraspagFacade {
                         expiryYear,
                         documentType,
                         documentNumber,
-                        amount,null);
+                        amount, null);
 
 
                 return false;
             }
-        }
-        catch (Exception ex){
+        } catch (Exception ex) {
             LOG.error("[Braspag] Error consuming API.", ex);
             if (ex instanceof BraspagTimeoutException)
                 throw (BraspagTimeoutException) ex;
             return false;
         }
     }
-
-
 
 
     private AuthorizeRequestDTO getAuthorizeRequestDTO(AbstractOrderModel cartModel, CustomerData customerData,
@@ -255,7 +265,7 @@ public class DefaultBraspagFacade implements BraspagFacade {
         AuthorizeRequestAddressInfoDTO addressDTO = new AuthorizeRequestAddressInfoDTO();
 
         AddressData addressData = null;
-        if (customerData.getDefaultShippingAddress() != null){
+        if (customerData.getDefaultShippingAddress() != null) {
             addressData = customerData.getDefaultShippingAddress();
         }
 
@@ -265,8 +275,8 @@ public class DefaultBraspagFacade implements BraspagFacade {
             addressDTO.setDistrict(addressData.getDistrict());
             addressDTO.setNumber(addressData.getStreetNumber());
             addressDTO.setState(addressData.getRegion().getIsocodeShort());
-            if(!StringUtils.isEmpty(addressData.getRemarks()) && addressData.getRemarks().length() >= 50) {
-                addressDTO.setComplement(addressData.getRemarks().substring(0,50));
+            if (!StringUtils.isEmpty(addressData.getRemarks()) && addressData.getRemarks().length() >= 50) {
+                addressDTO.setComplement(addressData.getRemarks().substring(0, 50));
             } else {
                 addressDTO.setComplement(addressData.getRemarks());
             }
@@ -282,13 +292,12 @@ public class DefaultBraspagFacade implements BraspagFacade {
         }
 
         PaymentInfoDTO paymentInfoDTO = getPaymentInfoDTO(cartModel, installments, securityCode, cardNumber, cardHolder,
-                cardBrand, expiryMonth, expiryYear, currentBaseStore, amount);
+                cardBrand, expiryMonth, expiryYear, currentBaseStore, amount, customerData, documentType);
 
         authorizeRequestDTO.setCustomer(customerInfoDTO);
         authorizeRequestDTO.setPayment(paymentInfoDTO);
         return authorizeRequestDTO;
     }
-
 
 
     private AuthorizeRequestDeliveryAddressInfoDTO getAuthorizeRequestDeliveryAddressInfoDTO(AddressData addressData) {
@@ -299,8 +308,8 @@ public class DefaultBraspagFacade implements BraspagFacade {
         deliveryAddressDTO.setDistrict(addressData.getDistrict());
         deliveryAddressDTO.setNumber(addressData.getStreetNumber());
         deliveryAddressDTO.setState(addressData.getRegion().getIsocodeShort());
-        if(!StringUtils.isEmpty(addressData.getRemarks()) && addressData.getRemarks().length() >=50){
-            deliveryAddressDTO.setComplement(addressData.getRemarks().substring(0,50));
+        if (!StringUtils.isEmpty(addressData.getRemarks()) && addressData.getRemarks().length() >= 50) {
+            deliveryAddressDTO.setComplement(addressData.getRemarks().substring(0, 50));
         } else {
             deliveryAddressDTO.setComplement(addressData.getRemarks());
         }
@@ -311,13 +320,13 @@ public class DefaultBraspagFacade implements BraspagFacade {
 
     private PaymentInfoDTO getPaymentInfoDTO(AbstractOrderModel cartModel, Integer installments, String securityCode, String cardNumber, String cardHolder, String cardBrand, String expiryMonth, String expiryYear,
                                              BaseStoreModel currentBaseStore,
-                                             Double amount) {
+                                             Double amount, CustomerData customerData, String documentType) {
         PaymentInfoDTO paymentInfoDTO = new PaymentInfoDTO();
         paymentInfoDTO.setProvider(currentBaseStore.getBraspagProvider());
         paymentInfoDTO.setType("CreditCard");
 
         //Valor em centavos
-        paymentInfoDTO.setAmount((int)(amount * 100));
+        paymentInfoDTO.setAmount((int) (amount * 100));
         paymentInfoDTO.setCurrency(cartModel.getCurrency().getIsocode());
         paymentInfoDTO.setCountry("BRA");
         paymentInfoDTO.setInstallments(installments);
@@ -344,7 +353,80 @@ public class DefaultBraspagFacade implements BraspagFacade {
         credentialsInfoDTO.setKey("D8888888");
         paymentInfoDTO.setCredentials(credentialsInfoDTO);
 
+        // Carregar os dados de Analise de Fraude
+        FraudAnalysisInfoDTO fraudAnalysisInfoDTO = new FraudAnalysisInfoDTO();
+        fraudAnalysisInfoDTO.setSequence("AnalyseFirst");
+        fraudAnalysisInfoDTO.setSequenceCriteria("OnSuccess");
+        fraudAnalysisInfoDTO.setProvider("Cybersource");
+        fraudAnalysisInfoDTO.setTotalOrderAmount(((int) (amount * 100)));
+        fraudAnalysisInfoDTO.setFingerPrintId(cartModel.getCode() + "_" + (cartModel.getCreditCardGatewayCount() == null ? 0 : cartModel.getCreditCardGatewayCount()));
+
+        BrowserInfoDTO browserInfoDTO = new BrowserInfoDTO();
+        browserInfoDTO.setCookiesAccepted(true);
+        browserInfoDTO.setIpAddress(cartModel.getRemoteAddr());
+        fraudAnalysisInfoDTO.setBrowser(browserInfoDTO);
+
+        CartInfoDTO cartInfoDTO = new CartInfoDTO();
+        List<ItemsInfoDTO> items = new ArrayList<>();
+        for (AbstractOrderEntryModel orderEntry : cartModel.getEntries()) {
+            ItemsInfoDTO itemsInfoDTO = new ItemsInfoDTO();
+            itemsInfoDTO.setName(orderEntry.getProduct().getName());
+            itemsInfoDTO.setQuantity(orderEntry.getQuantity().intValue());
+            itemsInfoDTO.setSku(orderEntry.getProduct().getCode());
+            itemsInfoDTO.setUnitPrice(orderEntry.getTotalPrice().intValue());
+            items.add(itemsInfoDTO);
+        }
+        cartInfoDTO.setItems(items);
+        fraudAnalysisInfoDTO.setCart(cartInfoDTO);
+
+
+        List<MerchantDefinedFieldsInfoDTO> MerchantDefinedFieldsItems = new ArrayList<>();
+        Integer freight = ((int) (cartModel.getDeliveryCost() * 100));
+
+        //1	Cliente que efetua o login.
+        MerchantDefinedFieldsItems.add(getMerchantFields(1, customerData.getUid()));
+        //3	Quantidade de parcelas do pedido.
+        MerchantDefinedFieldsItems.add(getMerchantFields(3, installments.toString()));
+        //4	Canal de venda.
+        MerchantDefinedFieldsItems.add(getMerchantFields(4, "Web"));
+        //21	Valor do frete.
+        MerchantDefinedFieldsItems.add(getMerchantFields(21, freight.toString()));
+        //23	Sufixo (4 ultimos digitos) do cart�o de cr�dito.
+        MerchantDefinedFieldsItems.add(getMerchantFields(23, cardNumber.substring(cardNumber.length() - 4)));
+        //26	Bin (6 primeiros digitos) do cart�o de cr�dito.
+        MerchantDefinedFieldsItems.add(getMerchantFields(26, cardNumber.substring(0, 6)));
+        //27	Tipo do logradouro do endereco de entrega.
+        MerchantDefinedFieldsItems.add(getMerchantFields(27, "C"));
+        //34	Identifica se o e-mail foi confirmado para ativa��o de conta.
+        MerchantDefinedFieldsItems.add(getMerchantFields(34, "SIM"));
+        //41	Tipo do documento.
+        MerchantDefinedFieldsItems.add(getMerchantFields(41, documentType));
+        //46	Nome impresso (portador) no cart�o de cr�dito.
+        MerchantDefinedFieldsItems.add(getMerchantFields(46, cardHolder));
+        //48	Quantidade de meios de pagamentos utilizados para efetuar a compra.
+        MerchantDefinedFieldsItems.add(getMerchantFields(48, "1"));
+        //52	Categoria do produto.
+        MerchantDefinedFieldsItems.add(getMerchantFields(52, "Outras Categorias N�o Especificadas"));
+        //82	Identifica se o seller (vendedor) ir� trabalhar com revis�o manual ou n�o.
+        MerchantDefinedFieldsItems.add(getMerchantFields(82, "NAO"));
+        //83	Segmento de neg�cio. Ex.: Varejo.
+        MerchantDefinedFieldsItems.add(getMerchantFields(83, "Varejo"));
+        //84	Nome da plataforma integrada � API Antifraude Gateway Braspag.
+        MerchantDefinedFieldsItems.add(getMerchantFields(84, "PROPRIA"));
+
+
+        fraudAnalysisInfoDTO.setMerchantDefinedFields(MerchantDefinedFieldsItems);
+        paymentInfoDTO.setFraudAnalysis(fraudAnalysisInfoDTO);
+
         return paymentInfoDTO;
+    }
+
+    private MerchantDefinedFieldsInfoDTO getMerchantFields(Integer id, String Value) {
+        MerchantDefinedFieldsInfoDTO merchantDefinedFieldsInfoDTO = new MerchantDefinedFieldsInfoDTO();
+        merchantDefinedFieldsInfoDTO.setId(id);
+        merchantDefinedFieldsInfoDTO.setValue(Value);
+        return merchantDefinedFieldsInfoDTO;
+
     }
 
     @Override
@@ -364,7 +446,7 @@ public class DefaultBraspagFacade implements BraspagFacade {
 
             VoidResponseDTO responseDTO = braspagSalesService.voidPayment(paymentInfoModel.getBraspagPaymentId(), braspagAuthorizationPojo, cartModel);
 
-            if (responseDTO != null){
+            if (responseDTO != null) {
 
                 paymentInfoModel.setBraspagStatus(responseDTO.getStatus());
                 paymentInfoModel.setBraspagReasonMessage(responseDTO.getReasonMessage());
@@ -384,7 +466,7 @@ public class DefaultBraspagFacade implements BraspagFacade {
                         null,
                         paymentInfoModel.getBraspagIssuerId(),
                         paymentInfoModel.getBraspagTotalValue()
-                        ,null);
+                        , null);
 
                 modelService.save(paymentInfoModel);
 
@@ -402,7 +484,7 @@ public class DefaultBraspagFacade implements BraspagFacade {
 
                 modelService.save(cartModel);
                 return responseDTO.getStatus() == BRASPAG_STATUS_VOID;
-            }else{
+            } else {
                 saveLogPayment(cartModel,
                         paymentInfoModel.getBraspagInstallments(),
                         paymentInfoModel.getBraspagCardNumber(),
@@ -413,11 +495,10 @@ public class DefaultBraspagFacade implements BraspagFacade {
                         null,
                         paymentInfoModel.getBraspagIssuerId(),
                         paymentInfoModel.getBraspagTotalValue()
-                        ,"Erro Cancelamento Captura sem resposta - 500");
+                        , "Erro Cancelamento Captura sem resposta - 500");
                 return false;
             }
-        }
-        catch (Exception ex){
+        } catch (Exception ex) {
             LOG.error("[Braspag] Error capturing Payment.", ex);
             return false;
         }
@@ -440,10 +521,11 @@ public class DefaultBraspagFacade implements BraspagFacade {
                                final String documentType,
                                final String documentNumber,
                                final Double amount,
-                               final String message){
+                               final String message) {
 
         //PaymentInfoModel paymentInfoModel = orderModel.getPaymentInfo();
-        CreditCardPaymentInfoModel paymentInfoModel = (CreditCardPaymentInfoModel) orderModel.getPaymentInfo();;
+        CreditCardPaymentInfoModel paymentInfoModel = (CreditCardPaymentInfoModel) orderModel.getPaymentInfo();
+        ;
 
         try {
 
@@ -462,7 +544,7 @@ public class DefaultBraspagFacade implements BraspagFacade {
             paymentLogInfo.setAmount(amount != null ? amount.toString() : null);
             //paymentLogInfo.setSystemName(step);
 
-            if(message != null){
+            if (message != null) {
                 paymentLogInfo.setIntegrationStatus("ERROR");
                 paymentLogInfo.setMessage(message);
                 modelService.save(paymentLogInfo);
@@ -488,8 +570,7 @@ public class DefaultBraspagFacade implements BraspagFacade {
 
     }
 
-    public void handlePaymentForm(BrasPagPaymentMethodData paymentMethodData)
-    {
+    public void handlePaymentForm(BrasPagPaymentMethodData paymentMethodData, String remoteAddress) {
         AbstractOrderModel cartModel;
         cartModel = cartService.getSessionCart();
         final B2BCustomerModel currentUser = (B2BCustomerModel) userService.getCurrentUser();
@@ -514,6 +595,8 @@ public class DefaultBraspagFacade implements BraspagFacade {
         paymentAddress.setRemarks(currentUser.getDefaultShipmentAddress().getRemarks());
         paymentAddress.setOwner(currentUser.getDefaultShipmentAddress().getOwner());
         cartModel.setPaymentAddress(paymentAddress);
+
+        cartModel.setRemoteAddr(remoteAddress);
 
         modelService.save(cartModel);
 
@@ -547,7 +630,7 @@ public class DefaultBraspagFacade implements BraspagFacade {
 
         paymentInfo.setCcOwner(paymentMethodData.getCardHolder());
         paymentInfo.setNumber(maskCardNumber(paymentMethodData.getCardNumber()));
-        paymentInfo.setType(CreditCardType.VISA);
+        paymentInfo.setType(enumerationService.getEnumerationValue(CreditCardType.class, paymentMethodData.getCardBrand()));
         paymentInfo.setValidToMonth(paymentMethodData.getExpiryMonth());
         paymentInfo.setValidToYear(paymentMethodData.getExpiryYear());
 
@@ -556,17 +639,23 @@ public class DefaultBraspagFacade implements BraspagFacade {
         return paymentInfo;
     }
 
+    public void updateLog(String orderCode, String cartCode) {
+        OrderPaymentLogInfoModel orderPaymentLogInfoModel = braspagSalesService.getLog(cartCode);
+        if (orderPaymentLogInfoModel != null) {
+            orderPaymentLogInfoModel.setOrderCode(orderCode);
+            modelService.save(orderPaymentLogInfoModel);
+        }
+    }
+
     protected String generateCcPaymentInfoCode(final AbstractOrderModel cartModel) {
         return cartModel.getCode() + "_" + UUID.randomUUID();
     }
 
-    private static String maskCardNumber(String value)
-    {
-        if (value == null)
-        {
+    private static String maskCardNumber(String value) {
+        if (value == null) {
             return new String();
         }
-        return StringUtils.overlay(value, StringUtils.repeat("*", 6), 6, value.length()-4);
+        return StringUtils.overlay(value, StringUtils.repeat("*", 12), 0, value.length() - 4);
     }
 
 }

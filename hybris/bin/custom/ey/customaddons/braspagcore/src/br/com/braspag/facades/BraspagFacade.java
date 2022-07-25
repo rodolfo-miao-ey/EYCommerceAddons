@@ -37,8 +37,10 @@ public interface BraspagFacade {
 
     boolean voidPayment(final AbstractOrderModel cartModel) throws BraspagApiException;
 
-    void handlePaymentForm(BrasPagPaymentMethodData paymentMethodData);
+    void handlePaymentForm(BrasPagPaymentMethodData paymentMethodData, String remoteAddress);
 
     PaymentInfoModel createPaymentInfo(AbstractOrderModel cartModel, BrasPagPaymentMethodData paymentMethodData);
+
+    void updateLog(String orderCode, String cartCode);
 
 }

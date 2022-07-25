@@ -182,4 +182,11 @@
 	</bean>
 
 	<bean id="genderData" class="br.com.ey.facades.product.data.GenderData" scope="prototype"/>
+
+	<alias name="defaultEyCheckoutFacade" alias="eyCheckoutFacade"/>
+	<bean id="defaultEyCheckoutFacade" parent="defaultCheckoutFacade"
+		  class="br.com.ey.facades.order.impl.DefaultEyCheckoutFacade">
+	</bean>
+
+
 </beans>

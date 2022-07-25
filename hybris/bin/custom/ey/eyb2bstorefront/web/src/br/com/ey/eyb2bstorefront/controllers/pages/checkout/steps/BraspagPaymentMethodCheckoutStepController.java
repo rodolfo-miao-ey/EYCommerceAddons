@@ -3,11 +3,13 @@ package br.com.ey.eyb2bstorefront.controllers.pages.checkout.steps;
 import br.com.braspag.exceptions.BraspagTimeoutException;
 import br.com.braspag.facades.BraspagFacade;
 import br.com.braspag.facades.order.data.BrasPagPaymentMethodData;
+import br.com.braspag.facades.order.data.BraspagPaymentModeData;
 import br.com.braspag.service.exception.BraspagApiException;
 import br.com.ey.eyb2bstorefront.controllers.ControllerConstants;
 import br.com.ey.eyb2bstorefront.form.BraspagPaymentForm;
 import br.com.ey.eyb2bstorefront.form.validation.BraspagPaymentFormValidator;
 
+import br.com.ey.facades.order.EyCheckoutFacade;
 import de.hybris.platform.acceleratorservices.enums.CheckoutPciOptionEnum;
 import de.hybris.platform.acceleratorservices.payment.constants.PaymentConstants;
 import de.hybris.platform.acceleratorservices.payment.data.PaymentData;
@@ -22,13 +24,18 @@ import de.hybris.platform.acceleratorstorefrontcommons.forms.AddressForm;
 import de.hybris.platform.acceleratorstorefrontcommons.forms.PaymentDetailsForm;
 import de.hybris.platform.acceleratorstorefrontcommons.forms.SopPaymentDetailsForm;
 import de.hybris.platform.acceleratorstorefrontcommons.util.AddressDataUtil;
+import de.hybris.platform.b2bacceleratorfacades.checkout.data.PlaceOrderData;
+import de.hybris.platform.b2bacceleratorfacades.exception.EntityValidationException;
 import de.hybris.platform.cms2.exceptions.CMSItemNotFoundException;
 import de.hybris.platform.cms2.model.pages.ContentPageModel;
+import de.hybris.platform.commercefacades.customer.CustomerFacade;
 import de.hybris.platform.commercefacades.order.data.CCPaymentInfoData;
 import de.hybris.platform.commercefacades.order.data.CardTypeData;
 import de.hybris.platform.commercefacades.order.data.CartData;
+import de.hybris.platform.commercefacades.order.data.OrderData;
 import de.hybris.platform.commercefacades.user.data.AddressData;
 import de.hybris.platform.commercefacades.user.data.CountryData;
+import de.hybris.platform.commercefacades.user.data.CustomerData;
 import de.hybris.platform.commerceservices.enums.CountryType;
 import br.com.ey.eyb2bstorefront.controllers.ControllerConstants;
 
@@ -41,17 +48,17 @@ import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 
+import de.hybris.platform.core.model.order.CartModel;
+import de.hybris.platform.order.CartService;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 
@@ -67,6 +74,21 @@ public class BraspagPaymentMethodCheckoutStepController extends AbstractCheckout
 
     @Resource(name = "addressDataUtil")
     private AddressDataUtil addressDataUtil;
+
+    @Resource(name = "braspagPaymentFormValidator")
+    private BraspagPaymentFormValidator BraspagPaymentFormValidator;
+
+    @Resource
+    private CartService cartService;
+
+    @Resource
+    private BraspagFacade braspagFacade;
+
+    @Resource
+    private CustomerFacade customerFacade;
+
+    @Resource
+    private EyCheckoutFacade eyCheckoutFacade;
 
     @ModelAttribute("billingCountries")
     public Collection<CountryData> getBillingCountries()
@@ -101,20 +123,6 @@ public class BraspagPaymentMethodCheckoutStepController extends AbstractCheckout
         return months;
     }
 
-    @ModelAttribute("startYears")
-    public List<SelectOption> getStartYears()
-    {
-        final List<SelectOption> startYears = new ArrayList<SelectOption>();
-        final Calendar calender = new GregorianCalendar();
-
-        for (int i = calender.get(Calendar.YEAR); i > calender.get(Calendar.YEAR) - 6; i--)
-        {
-            startYears.add(new SelectOption(String.valueOf(i), String.valueOf(i)));
-        }
-
-        return startYears;
-    }
-
     @ModelAttribute("expiryYears")
     public List<SelectOption> getExpiryYears()
     {
@@ -129,6 +137,18 @@ public class BraspagPaymentMethodCheckoutStepController extends AbstractCheckout
         return expiryYears;
     }
 
+    @ModelAttribute("paymentCardInstallments")
+    public Collection<BraspagPaymentModeData> getPaymentCardInstallments()
+    {
+        return eyCheckoutFacade.getInstallments();
+    }
+
+    @ModelAttribute("sopCardTypes")
+    public Collection<CardTypeData> getCardListTypes()
+    {
+        return getSopCardTypes();
+    }
+
     @Override
     @RequestMapping(value = "/add", method = RequestMethod.GET)
     @RequireHardLogIn
@@ -136,71 +156,28 @@ public class BraspagPaymentMethodCheckoutStepController extends AbstractCheckout
     @PreValidateCheckoutStep(checkoutStep = PAYMENT_METHOD)
     public String enterStep(final Model model, final RedirectAttributes redirectAttributes) throws CMSItemNotFoundException
     {
-        getCheckoutFacade().setDeliveryModeIfAvailable();
-        setupAddPaymentPage(model);
-
-        // Use the checkout PCI strategy for getting the URL for creating new subscriptions.
-        final CheckoutPciOptionEnum subscriptionPciOption = getCheckoutFlowFacade().getSubscriptionPciOption();
-        setCheckoutStepLinksForModel(model, getCheckoutStep());
-        if (CheckoutPciOptionEnum.HOP.equals(subscriptionPciOption))
-        {
-            // Redirect the customer to the HOP page or show error message if it fails (e.g. no HOP configurations).
-            try
-            {
-                final PaymentData hostedOrderPageData = getPaymentFacade().beginHopCreateSubscription("/checkout/multi/hop/response",
-                        "/integration/merchant_callback");
-                model.addAttribute("hostedOrderPageData", hostedOrderPageData);
-
-                final boolean hopDebugMode = getSiteConfigService().getBoolean(PaymentConstants.PaymentProperties.HOP_DEBUG_MODE,
-                        false);
-                model.addAttribute("hopDebugMode", Boolean.valueOf(hopDebugMode));
-
-                return ControllerConstants.Views.Pages.MultiStepCheckout.HostedOrderPostPage;
-            }
-            catch (final Exception e)
-            {
-                LOGGER.error("Failed to build beginCreateSubscription request", e);
-                GlobalMessages.addErrorMessage(model, "checkout.multi.paymentMethod.addPaymentDetails.generalError");
-            }
-        }
-        else if (CheckoutPciOptionEnum.SOP.equals(subscriptionPciOption))
-        {
-            // Build up the SOP form data and render page containing form
-            final SopPaymentDetailsForm sopPaymentDetailsForm = new SopPaymentDetailsForm();
-            try
-            {
-                setupSilentOrderPostPage(sopPaymentDetailsForm, model);
-                return ControllerConstants.Views.Pages.MultiStepCheckout.SilentOrderPostPage;
-            }
-            catch (final Exception e)
-            {
-                LOGGER.error("Failed to build beginCreateSubscription request", e);
-                GlobalMessages.addErrorMessage(model, "checkout.multi.paymentMethod.addPaymentDetails.generalError");
-                model.addAttribute("sopPaymentDetailsForm", sopPaymentDetailsForm);
-            }
-        }
-
-        // If not using HOP or SOP we need to build up the payment details form
-        final PaymentDetailsForm paymentDetailsForm = new PaymentDetailsForm();
-        final AddressForm addressForm = new AddressForm();
-        paymentDetailsForm.setBillingAddress(addressForm);
-        model.addAttribute(paymentDetailsForm);
-
         final CartData cartData = getCheckoutFacade().getCheckoutCart();
         model.addAttribute(CART_DATA_ATTR, cartData);
+
+        setupAddPaymentPage(model);
+        setCheckoutStepLinksForModel(model, getCheckoutStep());
+
+        final BraspagPaymentForm braspagPaymentForm = new BraspagPaymentForm();
+        model.addAttribute("braspagPaymentForm", braspagPaymentForm);
 
         return ControllerConstants.Views.Pages.MultiStepCheckout.AddPaymentMethodPage;
     }
 
-    @RequestMapping(value =
-            { "/add" }, method = RequestMethod.POST)
+    @RequestMapping(value = "/credit" , method = RequestMethod.POST)
     @RequireHardLogIn
-    public String add(final Model model, @Valid final PaymentDetailsForm paymentDetailsForm, final BindingResult bindingResult)
+    public String add(final Model model, @Valid final BraspagPaymentForm paymentDetailsForm,
+                      final BindingResult bindingResult, final RedirectAttributes redirectModel,
+                      final HttpServletRequest request)
             throws CMSItemNotFoundException
     {
-        getPaymentDetailsValidator().validate(paymentDetailsForm, bindingResult);
-        setupAddPaymentPage(model);
 
+        BraspagPaymentFormValidator.validate(paymentDetailsForm, bindingResult);
+        setupAddPaymentPage(model);
         final CartData cartData = getCheckoutFacade().getCheckoutCart();
         model.addAttribute(CART_DATA_ATTR, cartData);
 
@@ -210,79 +187,112 @@ public class BraspagPaymentMethodCheckoutStepController extends AbstractCheckout
             return ControllerConstants.Views.Pages.MultiStepCheckout.AddPaymentMethodPage;
         }
 
-        final CCPaymentInfoData paymentInfoData = new CCPaymentInfoData();
-        fillInPaymentData(paymentDetailsForm, paymentInfoData);
+        Boolean paymentAuthorized;
+        final BrasPagPaymentMethodData paymentInfoData = new BrasPagPaymentMethodData();
+        try{
 
-        final AddressData addressData;
-        if (Boolean.FALSE.equals(paymentDetailsForm.getNewBillingAddress()))
+            fillInPaymentData(paymentDetailsForm, paymentInfoData);
+            braspagFacade.handlePaymentForm(paymentInfoData, request.getRemoteAddr());
+            paymentAuthorized = authorizePayment(paymentInfoData);
+        } catch (final BraspagTimeoutException ignored)
         {
-            addressData = getCheckoutFacade().getCheckoutCart().getDeliveryAddress();
-            if (addressData == null)
-            {
-                GlobalMessages.addErrorMessage(model,
-                        "checkout.multi.paymentMethod.createSubscription.billingAddress.noneSelectedMsg");
-                return ControllerConstants.Views.Pages.MultiStepCheckout.AddPaymentMethodPage;
-            }
-
-            addressData.setBillingAddress(true); // mark this as billing address
-        }
-        else
-        {
-            final AddressForm addressForm = paymentDetailsForm.getBillingAddress();
-            addressData = addressDataUtil.convertToAddressData(addressForm);
-            addressData.setShippingAddress(Boolean.TRUE.equals(addressForm.getShippingAddress()));
-            addressData.setBillingAddress(Boolean.TRUE.equals(addressForm.getBillingAddress()));
-        }
-
-        getAddressVerificationFacade().verifyAddressData(addressData);
-        paymentInfoData.setBillingAddress(addressData);
-
-        final CCPaymentInfoData newPaymentSubscription = getCheckoutFacade().createPaymentSubscription(paymentInfoData);
-        if (!checkPaymentSubscription(model, paymentDetailsForm, newPaymentSubscription))
-        {
+            GlobalMessages.addErrorMessage(model, "checkout.error.payment.timeout");
             return ControllerConstants.Views.Pages.MultiStepCheckout.AddPaymentMethodPage;
         }
 
-        model.addAttribute("paymentId", newPaymentSubscription.getId());
-        setCheckoutStepLinksForModel(model, getCheckoutStep());
+        if (!paymentAuthorized) {
+            GlobalMessages.addErrorMessage(model, "checkout.error.payment.unauthorized");
+            return ControllerConstants.Views.Pages.MultiStepCheckout.AddPaymentMethodPage;
+        }
 
-        return getCheckoutStep().nextStep();
+        //whiteMartinsCheckoutFacade.updatePaymentMode(paymentInfoData, paymentDetailsForm.getPaymentInstallmentCard());
+
+        return placeOrder(model, redirectModel);
+
+        //return getCheckoutStep().nextStep();
     }
 
-    protected boolean checkPaymentSubscription(final Model model, @Valid final PaymentDetailsForm paymentDetailsForm,
-                                               final CCPaymentInfoData newPaymentSubscription)
+    @RequestMapping(value = "/payment-type", method = RequestMethod.GET)
+    @RequireHardLogIn
+    public String paymentType(final Model model, final RedirectAttributes redirectAttributes) throws CMSItemNotFoundException
     {
-        if (newPaymentSubscription != null && StringUtils.isNotBlank(newPaymentSubscription.getSubscriptionId()))
+        return REDIRECT_URL_ADD_PAYMENT_METHOD;
+    }
+
+    protected String placeOrder(final Model model, final RedirectAttributes redirectModel){
+        CartModel cartModel = cartService.getSessionCart();
+
+        final PlaceOrderData placeOrderData = new PlaceOrderData();
+        placeOrderData.setReplenishmentOrder(false);
+        placeOrderData.setTermsCheck(true);
+
+        OrderData orderData = null;
+        try
         {
-            if (Boolean.TRUE.equals(paymentDetailsForm.getSaveInAccount()) && getUserFacade().getCCPaymentInfos(true).size() <= 1)
-            {
-                getUserFacade().setDefaultPaymentInfo(newPaymentSubscription);
+            orderData = eyCheckoutFacade.placeOrder(placeOrderData);
+
+        }
+        catch (final EntityValidationException e)
+        {
+
+            GlobalMessages.addErrorMessage(model, e.getLocalizedMessage());
+
+                try {
+                    braspagFacade.voidPayment(cartModel);
+                } catch (BraspagApiException ex) {
+                    LOGGER.error("Failed to place Order", e);
+                }
+
+            try {
+                return enterStep(model, redirectModel);
+            } catch (CMSItemNotFoundException ex) {
+                LOGGER.error("Failed to place Order", ex);
             }
-            getCheckoutFacade().setPaymentDetails(newPaymentSubscription.getId());
+            //return ControllerConstants.Views.Pages.MultiStepCheckout.AddPaymentMethodPage;
         }
-        else
+        catch (final Exception e)
         {
-            GlobalMessages.addErrorMessage(model, "checkout.multi.paymentMethod.createSubscription.failedMsg");
-            return false;
+
+                try {
+                    braspagFacade.voidPayment(cartModel);
+                } catch (BraspagApiException ex) {
+                    LOGGER.error("Failed to place Order", e);
+                }
+
+            GlobalMessages.addErrorMessage(model, "checkout.placeOrder.failed");
+            //return ControllerConstants.Views.Pages.MultiStepCheckout.AddPaymentMethodPage;
+            try {
+                return enterStep(model, redirectModel);
+            } catch (CMSItemNotFoundException ex) {
+                LOGGER.error("Failed to place Order", ex);
+            }
         }
-        return true;
+
+        return redirectToOrderConfirmationPage(orderData);
     }
 
-    protected void fillInPaymentData(@Valid final PaymentDetailsForm paymentDetailsForm, final CCPaymentInfoData paymentInfoData)
+    protected void fillInPaymentData(@Valid final BraspagPaymentForm paymentDetailsForm, final BrasPagPaymentMethodData paymentInfoData)
     {
-        paymentInfoData.setId(paymentDetailsForm.getPaymentId());
-        paymentInfoData.setCardType(paymentDetailsForm.getCardTypeCode());
-        paymentInfoData.setAccountHolderName(paymentDetailsForm.getNameOnCard());
+
+        CartModel cartModel = cartService.getSessionCart();
+
+        paymentInfoData.setCardHolder(paymentDetailsForm.getNameOnCard());
         paymentInfoData.setCardNumber(paymentDetailsForm.getCardNumber());
-        paymentInfoData.setStartMonth(paymentDetailsForm.getStartMonth());
-        paymentInfoData.setStartYear(paymentDetailsForm.getStartYear());
         paymentInfoData.setExpiryMonth(paymentDetailsForm.getExpiryMonth());
         paymentInfoData.setExpiryYear(paymentDetailsForm.getExpiryYear());
-        if (Boolean.TRUE.equals(paymentDetailsForm.getSaveInAccount()) || getCheckoutCustomerStrategy().isAnonymousCheckout())
-        {
-            paymentInfoData.setSaved(true);
-        }
-        paymentInfoData.setIssueNumber(paymentDetailsForm.getIssueNumber());
+
+        //final WhiteMartinsPaymentModeModel whiteMartinsPaymentModeModel =
+        //        whiteMartinsCheckoutService.findPaymentInstallmentByCode(paymentDetailsForm.getPaymentInstallmentCard());
+
+        //paymentInfoData.setInstallments(whiteMartinsPaymentModeModel.getInstallment());
+        paymentInfoData.setSecurityCode(paymentDetailsForm.getSecurityNumber());
+        paymentInfoData.setAmount(cartModel.getTotalPrice());
+        paymentInfoData.setDocumentType(paymentDetailsForm.getDocumentType());
+        paymentInfoData.setDocumentNumber(paymentDetailsForm.getDocumentNumber());
+        paymentInfoData.setCardBrand(paymentDetailsForm.getCard_cardType());
+        paymentInfoData.setPurchaseOrderNumberCard(paymentDetailsForm.getPurchaseOrderNumberCard());
+
+
     }
 
     @RequestMapping(value = "/remove", method = RequestMethod.POST)
@@ -331,6 +341,46 @@ public class BraspagPaymentMethodCheckoutStepController extends AbstractCheckout
         return getCheckoutStep().nextStep();
     }
 
+//    @ResponseBody
+//    @RequestMapping(value = "/installments-list/{paymentType}", method = RequestMethod.GET)
+//    public List<WhiteMartinsPaymentModeData> findByPostalCode(@PathVariable("paymentType") final String paymentType){
+//        List<WhiteMartinsPaymentModeData> paymentModeList = whiteMartinsCheckoutFacade.getAllPaymentInstallments();
+//        paymentModeList.removeIf(p -> !p.getPaymentType().equals(CheckoutPaymentType.valueOf(paymentType)));
+//        return paymentModeList;
+//    }
+
+    private boolean authorizePayment(final BrasPagPaymentMethodData paymentInfoData) throws BraspagTimeoutException
+    {
+        CustomerData currentCustomerData;
+        currentCustomerData = customerFacade.getCurrentCustomer();
+
+        CartModel cartModel = cartService.getSessionCart();
+
+        try {
+            boolean cardAuthorized = false;
+
+            cardAuthorized = braspagFacade.authorizePayment(cartModel, currentCustomerData,
+                    paymentInfoData.getInstallments(),
+                    paymentInfoData.getSecurityCode(),
+                    paymentInfoData.getCardNumber(),
+                    paymentInfoData.getCardHolder(),
+                    paymentInfoData.getCardBrand(),
+                    paymentInfoData.getExpiryMonth(),
+                    paymentInfoData.getExpiryYear(),
+                    paymentInfoData.getDocumentType(),
+                    paymentInfoData.getDocumentNumber(),
+                    paymentInfoData.getAmount());
+
+            return cardAuthorized;
+        } catch (Exception ex) {
+            LOGGER.error("[Payment] Error authorizing payment for cart: " + cartModel.getCode(), ex);
+            if (ex instanceof BraspagTimeoutException)
+                throw (BraspagTimeoutException) ex;
+        }
+
+        return false;
+    }
+
     protected CardTypeData createCardTypeData(final String code, final String name)
     {
         final CardTypeData cardTypeData = new CardTypeData();
@@ -350,38 +400,6 @@ public class BraspagPaymentMethodCheckoutStepController extends AbstractCheckout
         storeCmsPageInModel(model, contentPage);
         setUpMetaDataForContentPage(model, contentPage);
         setCheckoutStepLinksForModel(model, getCheckoutStep());
-    }
-
-    protected void setupSilentOrderPostPage(final SopPaymentDetailsForm sopPaymentDetailsForm, final Model model)
-    {
-        try
-        {
-            final PaymentData silentOrderPageData = getPaymentFacade().beginSopCreateSubscription("/checkout/multi/sop/response",
-                    "/integration/merchant_callback");
-            model.addAttribute("silentOrderPageData", silentOrderPageData);
-            sopPaymentDetailsForm.setParameters(silentOrderPageData.getParameters());
-            model.addAttribute("paymentFormUrl", silentOrderPageData.getPostUrl());
-        }
-        catch (final IllegalArgumentException e)
-        {
-            model.addAttribute("paymentFormUrl", "");
-            model.addAttribute("silentOrderPageData", null);
-            LOGGER.warn("Failed to set up silent order post page", e);
-            GlobalMessages.addErrorMessage(model, "checkout.multi.sop.globalError");
-        }
-
-        final CartData cartData = getCheckoutFacade().getCheckoutCart();
-        model.addAttribute("silentOrderPostForm", new PaymentDetailsForm());
-        model.addAttribute(CART_DATA_ATTR, cartData);
-        model.addAttribute("deliveryAddress", cartData.getDeliveryAddress());
-        model.addAttribute("sopPaymentDetailsForm", sopPaymentDetailsForm);
-        model.addAttribute("paymentInfos", getUserFacade().getCCPaymentInfos(true));
-        model.addAttribute("sopCardTypes", getSopCardTypes());
-        if (StringUtils.isNotBlank(sopPaymentDetailsForm.getBillTo_country()))
-        {
-            model.addAttribute("regions", getI18NFacade().getRegionsForCountryIso(sopPaymentDetailsForm.getBillTo_country()));
-            model.addAttribute("country", sopPaymentDetailsForm.getBillTo_country());
-        }
     }
 
     protected Collection<CardTypeData> getSopCardTypes()

@@ -1,6 +1,8 @@
 package br.com.braspag.service.impl;
 
+import br.com.braspag.dao.BraspagSalesDao;
 import br.com.braspag.exceptions.BraspagTimeoutException;
+import br.com.braspag.model.OrderPaymentLogInfoModel;
 import br.com.braspag.payment.data.*;
 import br.com.braspag.service.BraspagSalesService;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -16,6 +18,7 @@ import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import javax.annotation.Resource;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.SocketTimeoutException;
@@ -28,6 +31,9 @@ public class DefaultBraspagSalesService implements BraspagSalesService {
     private static final String SALES_RESOURCE = "/v2/sales";
     private static final String CAPTURE_RESOURCE = "/v2/sales/%s/capture";
     private static final String VOID_RESOURCE = "/v2/sales/%s/void";
+
+    @Resource
+    private BraspagSalesDao braspagSalesDao;
 
     private final ObjectMapper objectMapper;
     private RestTemplate restTemplate;
@@ -164,5 +170,9 @@ public class DefaultBraspagSalesService implements BraspagSalesService {
 
     public void setRestTemplate(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
+    }
+
+    public OrderPaymentLogInfoModel getLog(String orderCode){
+        return braspagSalesDao.getLog(orderCode);
     }
 }
