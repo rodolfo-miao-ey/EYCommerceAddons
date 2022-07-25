@@ -371,7 +371,6 @@
 		<property name="documentType" type="java.lang.String"/>
 		<property name="documentNumber" type="java.lang.String"/>
 		<property name="cardBrand" type="java.lang.String"/>
-		<property name="purchaseOrderNumberCard" type="java.lang.String"/>
 	</bean>
 
 	<bean class="br.com.braspag.facades.order.data.BraspagPaymentModeData">

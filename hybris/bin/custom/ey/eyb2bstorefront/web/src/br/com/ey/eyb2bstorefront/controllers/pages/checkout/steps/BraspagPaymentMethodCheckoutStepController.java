@@ -4,7 +4,9 @@ import br.com.braspag.exceptions.BraspagTimeoutException;
 import br.com.braspag.facades.BraspagFacade;
 import br.com.braspag.facades.order.data.BrasPagPaymentMethodData;
 import br.com.braspag.facades.order.data.BraspagPaymentModeData;
+import br.com.braspag.model.BraspagPaymentModeModel;
 import br.com.braspag.service.exception.BraspagApiException;
+import br.com.ey.core.services.order.EyCheckoutService;
 import br.com.ey.eyb2bstorefront.controllers.ControllerConstants;
 import br.com.ey.eyb2bstorefront.form.BraspagPaymentForm;
 import br.com.ey.eyb2bstorefront.form.validation.BraspagPaymentFormValidator;
@@ -90,6 +92,9 @@ public class BraspagPaymentMethodCheckoutStepController extends AbstractCheckout
     @Resource
     private EyCheckoutFacade eyCheckoutFacade;
 
+    @Resource
+    private EyCheckoutService eyCheckoutService;
+
     @ModelAttribute("billingCountries")
     public Collection<CountryData> getBillingCountries()
     {
@@ -143,7 +148,7 @@ public class BraspagPaymentMethodCheckoutStepController extends AbstractCheckout
         return eyCheckoutFacade.getInstallments();
     }
 
-    @ModelAttribute("sopCardTypes")
+    @ModelAttribute("sopCardTypes") // Rodolfo Fazer
     public Collection<CardTypeData> getCardListTypes()
     {
         return getSopCardTypes();
@@ -207,9 +212,9 @@ public class BraspagPaymentMethodCheckoutStepController extends AbstractCheckout
 
         //whiteMartinsCheckoutFacade.updatePaymentMode(paymentInfoData, paymentDetailsForm.getPaymentInstallmentCard());
 
-        return placeOrder(model, redirectModel);
+        //return placeOrder(model, redirectModel);
 
-        //return getCheckoutStep().nextStep();
+        return getCheckoutStep().nextStep();
     }
 
     @RequestMapping(value = "/payment-type", method = RequestMethod.GET)
@@ -219,7 +224,7 @@ public class BraspagPaymentMethodCheckoutStepController extends AbstractCheckout
         return REDIRECT_URL_ADD_PAYMENT_METHOD;
     }
 
-    protected String placeOrder(final Model model, final RedirectAttributes redirectModel){
+   /* protected String placeOrder(final Model model, final RedirectAttributes redirectModel){
         CartModel cartModel = cartService.getSessionCart();
 
         final PlaceOrderData placeOrderData = new PlaceOrderData();
@@ -269,7 +274,7 @@ public class BraspagPaymentMethodCheckoutStepController extends AbstractCheckout
         }
 
         return redirectToOrderConfirmationPage(orderData);
-    }
+    } */
 
     protected void fillInPaymentData(@Valid final BraspagPaymentForm paymentDetailsForm, final BrasPagPaymentMethodData paymentInfoData)
     {
@@ -281,16 +286,15 @@ public class BraspagPaymentMethodCheckoutStepController extends AbstractCheckout
         paymentInfoData.setExpiryMonth(paymentDetailsForm.getExpiryMonth());
         paymentInfoData.setExpiryYear(paymentDetailsForm.getExpiryYear());
 
-        //final WhiteMartinsPaymentModeModel whiteMartinsPaymentModeModel =
-        //        whiteMartinsCheckoutService.findPaymentInstallmentByCode(paymentDetailsForm.getPaymentInstallmentCard());
+        final BraspagPaymentModeModel braspagPaymentModeModel =
+                eyCheckoutService.findPaymentInstallmentByCode(paymentDetailsForm.getPaymentInstallmentCard());
 
-        //paymentInfoData.setInstallments(whiteMartinsPaymentModeModel.getInstallment());
+        paymentInfoData.setInstallments(braspagPaymentModeModel.getInstallment());
         paymentInfoData.setSecurityCode(paymentDetailsForm.getSecurityNumber());
         paymentInfoData.setAmount(cartModel.getTotalPrice());
         paymentInfoData.setDocumentType(paymentDetailsForm.getDocumentType());
         paymentInfoData.setDocumentNumber(paymentDetailsForm.getDocumentNumber());
         paymentInfoData.setCardBrand(paymentDetailsForm.getCard_cardType());
-        paymentInfoData.setPurchaseOrderNumberCard(paymentDetailsForm.getPurchaseOrderNumberCard());
 
 
     }
@@ -340,14 +344,6 @@ public class BraspagPaymentMethodCheckoutStepController extends AbstractCheckout
     {
         return getCheckoutStep().nextStep();
     }
-
-//    @ResponseBody
-//    @RequestMapping(value = "/installments-list/{paymentType}", method = RequestMethod.GET)
-//    public List<WhiteMartinsPaymentModeData> findByPostalCode(@PathVariable("paymentType") final String paymentType){
-//        List<WhiteMartinsPaymentModeData> paymentModeList = whiteMartinsCheckoutFacade.getAllPaymentInstallments();
-//        paymentModeList.removeIf(p -> !p.getPaymentType().equals(CheckoutPaymentType.valueOf(paymentType)));
-//        return paymentModeList;
-//    }
 
     private boolean authorizePayment(final BrasPagPaymentMethodData paymentInfoData) throws BraspagTimeoutException
     {

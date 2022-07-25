@@ -87,6 +87,17 @@
 				</indexes>
 			</itemtype>
 
+			<itemtype code="BraspagPaymentMode" extends="PaymentMode">
+				<attributes>
+					<attribute qualifier="installment" type="java.lang.Integer" autocreate="true" >
+						<persistence type="property"/>
+						<modifiers read="true" write="true" search="true" optional="true" removable="false"/>
+					</attribute>
+				</attributes>
+			</itemtype>
+
+
+
 			<itemtype code="CreditCardPaymentInfo" autocreate="false"
 					  generate="false">
 				<description>Extending CreditCardPaymentInfo type with additional attributes.</description>

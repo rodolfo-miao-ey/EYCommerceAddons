@@ -29,7 +29,6 @@ public class BraspagPaymentFormValidator implements Validator {
         documentNumber = documentNumber.replaceAll("[./-]", "");
         paymentForm.setDocumentNumber(documentNumber);
 
-        validateStringField(paymentForm.getPurchaseOrderNumberCard(), PaymentFormField.PURCHASEORDERNUMBERCARD, errors);
         validateStringField(paymentForm.getCardNumber(), PaymentFormField.CARDNUMBER, errors);
         validateStringField(paymentForm.getCard_cardType(), PaymentFormField.CARDTYPE, errors);
         validateStringField(paymentForm.getDocumentNumber(), PaymentFormField.DOCUMENTNUMBER, errors);
@@ -37,14 +36,6 @@ public class BraspagPaymentFormValidator implements Validator {
         validateStringField(paymentForm.getExpiryYear(), PaymentFormField.EXPIRYYEAR, errors);
         validateStringField(paymentForm.getSecurityNumber(), PaymentFormField.SECURITYNUMBER, errors);
         validateStringField(paymentForm.getPaymentInstallmentCard(), PaymentFormField.INSTALLMENTS, errors);
-
-
-        if (!paymentForm.isTermsCheck())
-        {
-            errors.rejectValue(PaymentFormField.TERMS.getFieldKey(), PaymentFormField.TERMS.getErrorKey());
-        }
-
-
 
 
     }
@@ -59,16 +50,13 @@ public class BraspagPaymentFormValidator implements Validator {
 
     protected enum PaymentFormField {
         CARDNUMBER("cardNumber", "payment.cardNumber.invalid"),
-        PURCHASEORDERNUMBERCARD("purchaseOrderNumberCard", "payment.purchaseOrderNumberCard.invalid"),
         CARDNAME("nameOnCard", "payment.nameOnCard.invalid"),
         CARDTYPE("card_cardType", "payment.cardType.invalid"),
         SECURITYNUMBER("securityNumber", "payment.securityNumber.invalid"),
         EXPIRYYEAR("expiryYear", "payment.expiryYear.invalid"),
         EXPIRYMONTH("expiryMonth", "payment.expiryMonth.invalid"),
         INSTALLMENTS("paymentInstallmentCard", "payment.installments.invalid"),
-        DOCUMENTNUMBER("documentNumber", "payment.document.invalid"),
-        TERMS("termsCheck", "checkout.error.terms.not.accepted");
-
+        DOCUMENTNUMBER("documentNumber", "payment.document.invalid");
 
         private String fieldKey;
         private String errorKey;

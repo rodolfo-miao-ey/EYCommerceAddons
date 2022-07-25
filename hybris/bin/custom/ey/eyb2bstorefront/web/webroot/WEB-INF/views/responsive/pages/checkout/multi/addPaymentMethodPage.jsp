@@ -32,17 +32,14 @@
                            <form:form id="braspagPaymentForm" name="braspagPaymentForm" modelAttribute="braspagPaymentForm"
                                action="${request.contextPath}/checkout/multi/payment-method/credit" method="POST">
 
-                                    <formElement:formInputBox idKey="PurchaseOrderNumberCard" labelKey="payment.purchaseOrderNumberCard"
-                                        path="purchaseOrderNumberCard" inputCSS="form-control" mandatory="true" tabindex="1" />
-
                                     <formElement:formInputBox idKey="card_accountNumber" labelKey="payment.cardNumber"
-                                    path="cardNumber" inputCSS="form-control" mandatory="true" tabindex="3" placeholder="XXXX XXXX XXXX XXXX"
+                                    path="cardNumber" inputCSS="form-control" mandatory="true" tabindex="1" placeholder="XXXX XXXX XXXX XXXX"
                                     autocomplete="off" maxlength="2"/>
                                     <formElement:formSelectBox idKey="card_cardType" selectCSSClass="form-control" labelKey="payment.cardType"
                                     path="card_cardType" mandatory="true" skipBlank="false" skipBlankMessageKey="payment.cardType.pleaseSelect"
-                                    items="${sopCardTypes}" tabindex="3"/>
+                                    items="${sopCardTypes}" tabindex="2"/>
                                     <formElement:formInputBox idKey="card_nameOnCard" labelKey="payment.nameOnCard" path="nameOnCard"
-                                    inputCSS="form-control" tabindex="4" mandatory="true"/>
+                                    inputCSS="form-control" tabindex="3" mandatory="true"/>
 
                                         <fieldset id="document">
 

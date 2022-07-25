@@ -538,4 +538,17 @@
 		<property name="itemCleanupHooks" ref="csTicketRetentionHooks"/>
 		<property name="ticketBusinessService" ref="ticketBusinessService"/>
 	</bean>
+
+	<alias name="defaultEyCheckoutService" alias="eyCheckoutService"/>
+	<bean name="defaultEyCheckoutService" parent="defaultCommerceCheckoutService"
+		  class="br.com.ey.core.services.order.impl.DefaultEyCheckoutService">
+		<property name="eyPaymentModeDao" ref="eyPaymentModeDao" />
+	</bean>
+
+	<alias name="defaultEyPaymentModeDao" alias="eyPaymentModeDao"/>
+	<bean id="defaultEyPaymentModeDao" class="br.com.ey.core.dao.impl.DefaultEyPaymentModeDao">
+		<constructor-arg value="Warehouse" />
+	</bean>
+
+
 </beans>

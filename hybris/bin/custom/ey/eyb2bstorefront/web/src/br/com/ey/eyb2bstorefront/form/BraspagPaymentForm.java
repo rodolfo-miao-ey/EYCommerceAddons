@@ -14,8 +14,7 @@ public class BraspagPaymentForm {
     private String documentNumber;
     private String documentType;
     private String card_cardType; // NOSONAR
-    private boolean termsCheck;
-    private String purchaseOrderNumberCard;
+
 
     @Size(min = 1, max = 255, message = "{payment.installment.invalid}")
     public String getPaymentInstallmentCard() {
@@ -94,25 +93,5 @@ public class BraspagPaymentForm {
     {
         this.card_cardType = card_cardType;
     }
-
-    @AssertTrue(message = "")
-    public boolean isTermsCheck()
-    {
-        return termsCheck;
-    }
-
-    public void setTermsCheck(final boolean termsCheck)
-    {
-        this.termsCheck = termsCheck;
-    }
-
-    public String getPurchaseOrderNumberCard() {
-        return purchaseOrderNumberCard;
-    }
-
-    public void setPurchaseOrderNumberCard(String purchaseOrderNumberCard) {
-        this.purchaseOrderNumberCard = purchaseOrderNumberCard;
-    }
-
 
 }

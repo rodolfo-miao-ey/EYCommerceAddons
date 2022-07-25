@@ -186,7 +186,23 @@
 	<alias name="defaultEyCheckoutFacade" alias="eyCheckoutFacade"/>
 	<bean id="defaultEyCheckoutFacade" parent="defaultCheckoutFacade"
 		  class="br.com.ey.facades.order.impl.DefaultEyCheckoutFacade">
+		<property name="eyCheckoutService" ref="eyCheckoutService"/>
+		<property name="eyPaymentModeConverter" ref="eyPaymentModeConverter"/>
 	</bean>
+
+	<alias name="defaultEyPaymentModeConverter" alias="eyPaymentModeConverter"/>
+	<bean id="defaultEyPaymentModeConverter" parent="abstractPopulatingConverter">
+		<property name="targetClass" value="br.com.braspag.facades.order.data.BraspagPaymentModeData"/>
+		<property name="populators">
+			<list>
+				<ref bean="eyPaymentModePopulator"/>
+			</list>
+		</property>
+	</bean>
+
+	<alias name="defaultEyPaymentModePopulator" alias="eyPaymentModePopulator"/>
+	<bean id="defaultEyPaymentModePopulator"
+		  class="br.com.ey.facades.populators.EyPaymentModePopulator"/>
 
 
 </beans>
