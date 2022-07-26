@@ -65,7 +65,6 @@
 						<wz:property qualifier="active"/>
 						<wz:property qualifier="code"/>
 						<wz:property qualifier="name"/>
-						<wz:property qualifier="paymentType"/>
 						<wz:property qualifier="installment"/>
 						<wz:property qualifier="paymentInfoType"/>
 						<wz:property qualifier="creationtime"/>
@@ -86,7 +85,6 @@
 			<editorArea:tab name="hmc.tab.BraspagPaymentMode.customize">
 				<editorArea:section name="hmc.sec.BraspagPaymentMode.customize">
 					<editorArea:attribute qualifier="installment"/>
-					<editorArea:attribute qualifier="paymentType"/>
 				</editorArea:section>
 			</editorArea:tab>
 		</editorArea:editorArea>
@@ -98,7 +96,6 @@
 			<list:column qualifier="name"/>
 			<list:column qualifier="description"/>
 			<list:column qualifier="installment"/>
-			<list:column qualifier="paymentType"/>
 		</list:list-view>
 	</context>
 

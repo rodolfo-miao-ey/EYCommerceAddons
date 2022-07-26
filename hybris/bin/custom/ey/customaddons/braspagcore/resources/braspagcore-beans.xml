@@ -380,4 +380,9 @@
 		<property name="installment" type="java.lang.Integer"/>
 	</bean>
 
+	<bean class="br.com.braspag.facades.payment.data.CreditCardBrandData">
+		<property name="code" type="java.lang.String"/>
+		<property name="name" type="java.lang.String"/>
+	</bean>
+
 </beans>

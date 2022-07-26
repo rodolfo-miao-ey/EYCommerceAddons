@@ -34,7 +34,7 @@
 
                                     <formElement:formInputBox idKey="card_accountNumber" labelKey="payment.cardNumber"
                                     path="cardNumber" inputCSS="form-control" mandatory="true" tabindex="1" placeholder="XXXX XXXX XXXX XXXX"
-                                    autocomplete="off" maxlength="2"/>
+                                    autocomplete="off" maxlength="16"/>
                                     <formElement:formSelectBox idKey="card_cardType" selectCSSClass="form-control" labelKey="payment.cardType"
                                     path="card_cardType" mandatory="true" skipBlank="false" skipBlankMessageKey="payment.cardType.pleaseSelect"
                                     items="${sopCardTypes}" tabindex="2"/>

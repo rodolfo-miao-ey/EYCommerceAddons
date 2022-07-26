@@ -4,17 +4,15 @@ import br.com.braspag.exceptions.BraspagTimeoutException;
 import br.com.braspag.facades.BraspagFacade;
 import br.com.braspag.facades.order.data.BrasPagPaymentMethodData;
 import br.com.braspag.facades.order.data.BraspagPaymentModeData;
+import br.com.braspag.facades.payment.data.CreditCardBrandData;
 import br.com.braspag.model.BraspagPaymentModeModel;
-import br.com.braspag.service.exception.BraspagApiException;
 import br.com.ey.core.services.order.EyCheckoutService;
 import br.com.ey.eyb2bstorefront.controllers.ControllerConstants;
 import br.com.ey.eyb2bstorefront.form.BraspagPaymentForm;
 import br.com.ey.eyb2bstorefront.form.validation.BraspagPaymentFormValidator;
 
 import br.com.ey.facades.order.EyCheckoutFacade;
-import de.hybris.platform.acceleratorservices.enums.CheckoutPciOptionEnum;
-import de.hybris.platform.acceleratorservices.payment.constants.PaymentConstants;
-import de.hybris.platform.acceleratorservices.payment.data.PaymentData;
+import br.com.ey.facades.payment.EyCreditCardBrandFacade;
 import de.hybris.platform.acceleratorstorefrontcommons.annotations.PreValidateCheckoutStep;
 import de.hybris.platform.acceleratorstorefrontcommons.annotations.PreValidateQuoteCheckoutStep;
 import de.hybris.platform.acceleratorstorefrontcommons.annotations.RequireHardLogIn;
@@ -22,33 +20,17 @@ import de.hybris.platform.acceleratorstorefrontcommons.checkout.steps.CheckoutSt
 import de.hybris.platform.acceleratorstorefrontcommons.constants.WebConstants;
 import de.hybris.platform.acceleratorstorefrontcommons.controllers.pages.checkout.steps.AbstractCheckoutStepController;
 import de.hybris.platform.acceleratorstorefrontcommons.controllers.util.GlobalMessages;
-import de.hybris.platform.acceleratorstorefrontcommons.forms.AddressForm;
-import de.hybris.platform.acceleratorstorefrontcommons.forms.PaymentDetailsForm;
-import de.hybris.platform.acceleratorstorefrontcommons.forms.SopPaymentDetailsForm;
 import de.hybris.platform.acceleratorstorefrontcommons.util.AddressDataUtil;
-import de.hybris.platform.b2bacceleratorfacades.checkout.data.PlaceOrderData;
-import de.hybris.platform.b2bacceleratorfacades.exception.EntityValidationException;
 import de.hybris.platform.cms2.exceptions.CMSItemNotFoundException;
 import de.hybris.platform.cms2.model.pages.ContentPageModel;
 import de.hybris.platform.commercefacades.customer.CustomerFacade;
-import de.hybris.platform.commercefacades.order.data.CCPaymentInfoData;
 import de.hybris.platform.commercefacades.order.data.CardTypeData;
 import de.hybris.platform.commercefacades.order.data.CartData;
-import de.hybris.platform.commercefacades.order.data.OrderData;
-import de.hybris.platform.commercefacades.user.data.AddressData;
 import de.hybris.platform.commercefacades.user.data.CountryData;
 import de.hybris.platform.commercefacades.user.data.CustomerData;
 import de.hybris.platform.commerceservices.enums.CountryType;
-import br.com.ey.eyb2bstorefront.controllers.ControllerConstants;
 
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.GregorianCalendar;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import java.util.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -94,6 +76,9 @@ public class BraspagPaymentMethodCheckoutStepController extends AbstractCheckout
 
     @Resource
     private EyCheckoutService eyCheckoutService;
+
+    @Resource
+    private EyCreditCardBrandFacade eyCreditCardBrandFacade;
 
     @ModelAttribute("billingCountries")
     public Collection<CountryData> getBillingCountries()
@@ -304,6 +289,7 @@ public class BraspagPaymentMethodCheckoutStepController extends AbstractCheckout
     public String remove(@RequestParam(value = "paymentInfoId") final String paymentMethodId,
                          final RedirectAttributes redirectAttributes) throws CMSItemNotFoundException
     {
+        //noinspection removal
         getUserFacade().unlinkCCPaymentInfo(paymentMethodId);
         GlobalMessages.addFlashMessage(redirectAttributes, GlobalMessages.CONF_MESSAGES_HOLDER,
                 "text.account.profile.paymentCart.removed");
@@ -402,16 +388,14 @@ public class BraspagPaymentMethodCheckoutStepController extends AbstractCheckout
     {
         final Collection<CardTypeData> sopCardTypes = new ArrayList<CardTypeData>();
 
-        final List<CardTypeData> supportedCardTypes = getCheckoutFacade().getSupportedCardTypes();
-        for (final CardTypeData supportedCardType : supportedCardTypes)
+        final Set<CreditCardBrandData> creditCardBrandDataSet =
+                eyCreditCardBrandFacade.getAllSupportedCreditCardBrands();
+        for(final CreditCardBrandData creditCardBrandData : creditCardBrandDataSet)
         {
-            // Add credit cards for all supported cards that have mappings for cybersource SOP
-            if (CYBERSOURCE_SOP_CARD_TYPES.containsKey(supportedCardType.getCode()))
-            {
-                sopCardTypes.add(
-                        createCardTypeData(CYBERSOURCE_SOP_CARD_TYPES.get(supportedCardType.getCode()), supportedCardType.getName()));
-            }
+            sopCardTypes.add(
+                    createCardTypeData(creditCardBrandData.getCode(), creditCardBrandData.getName()));
         }
+
         return sopCardTypes;
     }
 

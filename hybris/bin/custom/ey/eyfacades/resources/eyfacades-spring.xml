@@ -205,4 +205,24 @@
 		  class="br.com.ey.facades.populators.EyPaymentModePopulator"/>
 
 
+	<alias name="defaultEyCreditCardBrandPopulator" alias="eyCreditCardBrandPopulator"/>
+	<bean id="defaultEyCreditCardBrandPopulator" class="br.com.ey.facades.populators.EyCreditCardBrandPopulator" />
+
+	<alias name="defaultEyCreditCardBrandConverter" alias="eyCreditCardBrandConverter"/>
+	<bean id="defaultEyCreditCardBrandConverter" parent="abstractPopulatingConverter">
+		<property name="targetClass" value="br.com.braspag.facades.payment.data.CreditCardBrandData"/>
+		<property name="populators">
+			<list>
+				<ref bean="eyCreditCardBrandPopulator"/>
+			</list>
+		</property>
+	</bean>
+
+	<alias name="defaultEyCreditCardBrandFacade" alias="eyCreditCardBrandFacade"/>
+	<bean id="defaultEyCreditCardBrandFacade" class="br.com.ey.facades.payment.impl.DefaultEyCreditCardBrandFacade">
+		<property name="eyCreditCardBrandConverter" ref="eyCreditCardBrandConverter" />
+		<property name="eyCreditCardBrandService" ref="eyCreditCardBrandService" />
+	</bean>
+	
+
 </beans>

@@ -550,5 +550,16 @@
 		<constructor-arg value="Warehouse" />
 	</bean>
 
+	<alias name="defaultEyCreditCardBrandDAO" alias="eyCreditCardBrandDAO"/>
+	<bean id="defaultEyCreditCardBrandDAO" class="br.com.ey.core.dao.impl.DefaultEyCreditCardBrandDAO">
+		<property name="flexibleSearchService" ref="flexibleSearchService" />
+	</bean>
+
+	<alias name="defaultEyCreditCardBrandService" alias="eyCreditCardBrandService"/>
+	<bean id="defaultEyCreditCardBrandService" class="br.com.ey.core.services.payment.impl.DefaultEyCreditCardBrandService">
+		<property name="baseStoreService" ref="baseStoreService" />
+		<property name="eyCreditCardBrandDAO" ref="eyCreditCardBrandDAO" />
+	</bean>
+
 
 </beans>
