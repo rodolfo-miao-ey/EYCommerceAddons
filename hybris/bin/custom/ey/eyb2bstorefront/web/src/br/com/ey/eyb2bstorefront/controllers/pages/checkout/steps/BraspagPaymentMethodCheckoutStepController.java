@@ -97,15 +97,15 @@ public class BraspagPaymentMethodCheckoutStepController extends AbstractCheckout
     {
         final List<SelectOption> months = new ArrayList<SelectOption>();
 
-        months.add(new SelectOption("1", "01"));
-        months.add(new SelectOption("2", "02"));
-        months.add(new SelectOption("3", "03"));
-        months.add(new SelectOption("4", "04"));
-        months.add(new SelectOption("5", "05"));
-        months.add(new SelectOption("6", "06"));
-        months.add(new SelectOption("7", "07"));
-        months.add(new SelectOption("8", "08"));
-        months.add(new SelectOption("9", "09"));
+        months.add(new SelectOption("01", "01"));
+        months.add(new SelectOption("02", "02"));
+        months.add(new SelectOption("03", "03"));
+        months.add(new SelectOption("04", "04"));
+        months.add(new SelectOption("05", "05"));
+        months.add(new SelectOption("06", "06"));
+        months.add(new SelectOption("07", "07"));
+        months.add(new SelectOption("08", "08"));
+        months.add(new SelectOption("09", "09"));
         months.add(new SelectOption("10", "10"));
         months.add(new SelectOption("11", "11"));
         months.add(new SelectOption("12", "12"));
@@ -133,7 +133,7 @@ public class BraspagPaymentMethodCheckoutStepController extends AbstractCheckout
         return eyCheckoutFacade.getInstallments();
     }
 
-    @ModelAttribute("sopCardTypes") // Rodolfo Fazer
+    @ModelAttribute("sopCardTypes")
     public Collection<CardTypeData> getCardListTypes()
     {
         return getSopCardTypes();
@@ -194,6 +194,8 @@ public class BraspagPaymentMethodCheckoutStepController extends AbstractCheckout
             GlobalMessages.addErrorMessage(model, "checkout.error.payment.unauthorized");
             return ControllerConstants.Views.Pages.MultiStepCheckout.AddPaymentMethodPage;
         }
+
+        eyCheckoutFacade.updateCart();
 
         //whiteMartinsCheckoutFacade.updatePaymentMode(paymentInfoData, paymentDetailsForm.getPaymentInstallmentCard());
 

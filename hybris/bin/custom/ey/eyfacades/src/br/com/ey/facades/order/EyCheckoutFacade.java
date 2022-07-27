@@ -12,6 +12,11 @@ public interface EyCheckoutFacade extends CheckoutFacade {
 
     List<BraspagPaymentModeData> getInstallments();
 
+
+    boolean authorizePayment(String securityCode);
+
+    void updateCart();
+
     /**
      * Place Order function
      *

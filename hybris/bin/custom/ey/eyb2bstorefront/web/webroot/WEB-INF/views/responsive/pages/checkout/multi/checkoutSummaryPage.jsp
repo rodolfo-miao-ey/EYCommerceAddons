@@ -8,8 +8,8 @@
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
 
 <spring:htmlEscape defaultHtmlEscape="true" />
-
-<spring:url value="/checkout/multi/summary/placeOrder" var="placeOrderUrl" htmlEscape="false"/>
+blablabal
+<spring:url value="/checkout/multi/braspag/summary/placeOrder" var="placeOrderUrl" htmlEscape="false"/>
 <spring:url value="/checkout/multi/termsAndConditions" var="getTermsAndConditionsUrl" htmlEscape="false"/>
 
 <template:page pageTitle="${pageTitle}" hideHeaderLinks="true">
