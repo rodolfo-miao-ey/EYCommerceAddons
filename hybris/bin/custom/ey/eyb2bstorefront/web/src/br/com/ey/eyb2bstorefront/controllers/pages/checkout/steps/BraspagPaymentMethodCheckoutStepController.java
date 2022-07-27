@@ -211,57 +211,6 @@ public class BraspagPaymentMethodCheckoutStepController extends AbstractCheckout
         return REDIRECT_URL_ADD_PAYMENT_METHOD;
     }
 
-   /* protected String placeOrder(final Model model, final RedirectAttributes redirectModel){
-        CartModel cartModel = cartService.getSessionCart();
-
-        final PlaceOrderData placeOrderData = new PlaceOrderData();
-        placeOrderData.setReplenishmentOrder(false);
-        placeOrderData.setTermsCheck(true);
-
-        OrderData orderData = null;
-        try
-        {
-            orderData = eyCheckoutFacade.placeOrder(placeOrderData);
-
-        }
-        catch (final EntityValidationException e)
-        {
-
-            GlobalMessages.addErrorMessage(model, e.getLocalizedMessage());
-
-                try {
-                    braspagFacade.voidPayment(cartModel);
-                } catch (BraspagApiException ex) {
-                    LOGGER.error("Failed to place Order", e);
-                }
-
-            try {
-                return enterStep(model, redirectModel);
-            } catch (CMSItemNotFoundException ex) {
-                LOGGER.error("Failed to place Order", ex);
-            }
-            //return ControllerConstants.Views.Pages.MultiStepCheckout.AddPaymentMethodPage;
-        }
-        catch (final Exception e)
-        {
-
-                try {
-                    braspagFacade.voidPayment(cartModel);
-                } catch (BraspagApiException ex) {
-                    LOGGER.error("Failed to place Order", e);
-                }
-
-            GlobalMessages.addErrorMessage(model, "checkout.placeOrder.failed");
-            //return ControllerConstants.Views.Pages.MultiStepCheckout.AddPaymentMethodPage;
-            try {
-                return enterStep(model, redirectModel);
-            } catch (CMSItemNotFoundException ex) {
-                LOGGER.error("Failed to place Order", ex);
-            }
-        }
-
-        return redirectToOrderConfirmationPage(orderData);
-    } */
 
     protected void fillInPaymentData(@Valid final BraspagPaymentForm paymentDetailsForm, final BrasPagPaymentMethodData paymentInfoData)
     {

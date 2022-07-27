@@ -4,6 +4,17 @@
 package br.com.ey.storefront.controllers.pages.checkout.steps;
 
 
+import br.com.braspag.exceptions.BraspagTimeoutException;
+import br.com.braspag.facades.BraspagFacade;
+import br.com.braspag.facades.order.data.BrasPagPaymentMethodData;
+import br.com.braspag.facades.order.data.BraspagPaymentModeData;
+import br.com.braspag.facades.payment.data.CreditCardBrandData;
+import br.com.braspag.model.BraspagPaymentModeModel;
+import br.com.ey.core.services.order.EyCheckoutService;
+import br.com.ey.facades.order.EyCheckoutFacade;
+import br.com.ey.facades.payment.EyCreditCardBrandFacade;
+import br.com.ey.storefront.form.BraspagPaymentForm;
+import br.com.ey.storefront.form.validation.BraspagPaymentFormValidator;
 import de.hybris.platform.acceleratorservices.enums.CheckoutPciOptionEnum;
 import de.hybris.platform.acceleratorservices.payment.constants.PaymentConstants;
 import de.hybris.platform.acceleratorservices.payment.data.PaymentData;
@@ -20,25 +31,24 @@ import de.hybris.platform.acceleratorstorefrontcommons.forms.SopPaymentDetailsFo
 import de.hybris.platform.acceleratorstorefrontcommons.util.AddressDataUtil;
 import de.hybris.platform.cms2.exceptions.CMSItemNotFoundException;
 import de.hybris.platform.cms2.model.pages.ContentPageModel;
+import de.hybris.platform.commercefacades.customer.CustomerFacade;
 import de.hybris.platform.commercefacades.order.data.CCPaymentInfoData;
 import de.hybris.platform.commercefacades.order.data.CardTypeData;
 import de.hybris.platform.commercefacades.order.data.CartData;
 import de.hybris.platform.commercefacades.user.data.AddressData;
 import de.hybris.platform.commercefacades.user.data.CountryData;
+import de.hybris.platform.commercefacades.user.data.CustomerData;
 import de.hybris.platform.commerceservices.enums.CountryType;
 import br.com.ey.storefront.controllers.ControllerConstants;
 
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.GregorianCalendar;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 
+import de.hybris.platform.core.model.order.CartModel;
+import de.hybris.platform.order.CartService;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.springframework.stereotype.Controller;
@@ -64,6 +74,28 @@ public class PaymentMethodCheckoutStepController extends AbstractCheckoutStepCon
 	@Resource(name = "addressDataUtil")
 	private AddressDataUtil addressDataUtil;
 
+	@Resource(name = "braspagPaymentFormValidator")
+	private BraspagPaymentFormValidator BraspagPaymentFormValidator;
+
+	@Resource
+	private CartService cartService;
+
+	@Resource
+	private BraspagFacade braspagFacade;
+
+	@Resource
+	private CustomerFacade customerFacade;
+
+	@Resource
+	private EyCheckoutFacade eyCheckoutFacade;
+
+	@Resource
+	private EyCheckoutService eyCheckoutService;
+
+	@Resource
+	private EyCreditCardBrandFacade eyCreditCardBrandFacade;
+
+
 	@ModelAttribute("billingCountries")
 	public Collection<CountryData> getBillingCountries()
 	{
@@ -81,34 +113,20 @@ public class PaymentMethodCheckoutStepController extends AbstractCheckoutStepCon
 	{
 		final List<SelectOption> months = new ArrayList<SelectOption>();
 
-		months.add(new SelectOption("1", "01"));
-		months.add(new SelectOption("2", "02"));
-		months.add(new SelectOption("3", "03"));
-		months.add(new SelectOption("4", "04"));
-		months.add(new SelectOption("5", "05"));
-		months.add(new SelectOption("6", "06"));
-		months.add(new SelectOption("7", "07"));
-		months.add(new SelectOption("8", "08"));
-		months.add(new SelectOption("9", "09"));
+		months.add(new SelectOption("01", "01"));
+		months.add(new SelectOption("02", "02"));
+		months.add(new SelectOption("03", "03"));
+		months.add(new SelectOption("04", "04"));
+		months.add(new SelectOption("05", "05"));
+		months.add(new SelectOption("06", "06"));
+		months.add(new SelectOption("07", "07"));
+		months.add(new SelectOption("08", "08"));
+		months.add(new SelectOption("09", "09"));
 		months.add(new SelectOption("10", "10"));
 		months.add(new SelectOption("11", "11"));
 		months.add(new SelectOption("12", "12"));
 
 		return months;
-	}
-
-	@ModelAttribute("startYears")
-	public List<SelectOption> getStartYears()
-	{
-		final List<SelectOption> startYears = new ArrayList<SelectOption>();
-		final Calendar calender = new GregorianCalendar();
-
-		for (int i = calender.get(Calendar.YEAR); i > calender.get(Calendar.YEAR) - 6; i--)
-		{
-			startYears.add(new SelectOption(String.valueOf(i), String.valueOf(i)));
-		}
-
-		return startYears;
 	}
 
 	@ModelAttribute("expiryYears")
@@ -125,6 +143,18 @@ public class PaymentMethodCheckoutStepController extends AbstractCheckoutStepCon
 		return expiryYears;
 	}
 
+	@ModelAttribute("paymentCardInstallments")
+	public Collection<BraspagPaymentModeData> getPaymentCardInstallments()
+	{
+		return eyCheckoutFacade.getInstallments();
+	}
+
+	@ModelAttribute("sopCardTypes")
+	public Collection<CardTypeData> getCardListTypes()
+	{
+		return getSopCardTypes();
+	}
+
 	@Override
 	@RequestMapping(value = "/add", method = RequestMethod.GET)
 	@RequireHardLogIn
@@ -132,71 +162,27 @@ public class PaymentMethodCheckoutStepController extends AbstractCheckoutStepCon
 	@PreValidateCheckoutStep(checkoutStep = PAYMENT_METHOD)
 	public String enterStep(final Model model, final RedirectAttributes redirectAttributes) throws CMSItemNotFoundException
 	{
-		getCheckoutFacade().setDeliveryModeIfAvailable();
-		setupAddPaymentPage(model);
-
-		// Use the checkout PCI strategy for getting the URL for creating new subscriptions.
-		final CheckoutPciOptionEnum subscriptionPciOption = getCheckoutFlowFacade().getSubscriptionPciOption();
-		setCheckoutStepLinksForModel(model, getCheckoutStep());
-		if (CheckoutPciOptionEnum.HOP.equals(subscriptionPciOption))
-		{
-			// Redirect the customer to the HOP page or show error message if it fails (e.g. no HOP configurations).
-			try
-			{
-				final PaymentData hostedOrderPageData = getPaymentFacade().beginHopCreateSubscription("/checkout/multi/hop/response",
-						"/integration/merchant_callback");
-				model.addAttribute("hostedOrderPageData", hostedOrderPageData);
-
-				final boolean hopDebugMode = getSiteConfigService().getBoolean(PaymentConstants.PaymentProperties.HOP_DEBUG_MODE,
-						false);
-				model.addAttribute("hopDebugMode", Boolean.valueOf(hopDebugMode));
-
-				return ControllerConstants.Views.Pages.MultiStepCheckout.HostedOrderPostPage;
-			}
-			catch (final Exception e)
-			{
-				LOGGER.error("Failed to build beginCreateSubscription request", e);
-				GlobalMessages.addErrorMessage(model, "checkout.multi.paymentMethod.addPaymentDetails.generalError");
-			}
-		}
-		else if (CheckoutPciOptionEnum.SOP.equals(subscriptionPciOption))
-		{
-			// Build up the SOP form data and render page containing form
-			final SopPaymentDetailsForm sopPaymentDetailsForm = new SopPaymentDetailsForm();
-			try
-			{
-				setupSilentOrderPostPage(sopPaymentDetailsForm, model);
-				return ControllerConstants.Views.Pages.MultiStepCheckout.SilentOrderPostPage;
-			}
-			catch (final Exception e)
-			{
-				LOGGER.error("Failed to build beginCreateSubscription request", e);
-				GlobalMessages.addErrorMessage(model, "checkout.multi.paymentMethod.addPaymentDetails.generalError");
-				model.addAttribute("sopPaymentDetailsForm", sopPaymentDetailsForm);
-			}
-		}
-
-		// If not using HOP or SOP we need to build up the payment details form
-		final PaymentDetailsForm paymentDetailsForm = new PaymentDetailsForm();
-		final AddressForm addressForm = new AddressForm();
-		paymentDetailsForm.setBillingAddress(addressForm);
-		model.addAttribute(paymentDetailsForm);
-
 		final CartData cartData = getCheckoutFacade().getCheckoutCart();
 		model.addAttribute(CART_DATA_ATTR, cartData);
 
+		setupAddPaymentPage(model);
+		setCheckoutStepLinksForModel(model, getCheckoutStep());
+
+		final BraspagPaymentForm braspagPaymentForm = new BraspagPaymentForm();
+		model.addAttribute("braspagPaymentForm", braspagPaymentForm);
 		return ControllerConstants.Views.Pages.MultiStepCheckout.AddPaymentMethodPage;
 	}
 
-	@RequestMapping(value =
-	{ "/add" }, method = RequestMethod.POST)
+	@RequestMapping(value = "/credit" , method = RequestMethod.POST)
 	@RequireHardLogIn
-	public String add(final Model model, @Valid final PaymentDetailsForm paymentDetailsForm, final BindingResult bindingResult)
+	public String add(final Model model, @Valid final BraspagPaymentForm paymentDetailsForm,
+					  final BindingResult bindingResult, final RedirectAttributes redirectModel,
+					  final HttpServletRequest request)
 			throws CMSItemNotFoundException
 	{
-		getPaymentDetailsValidator().validate(paymentDetailsForm, bindingResult);
-		setupAddPaymentPage(model);
 
+		BraspagPaymentFormValidator.validate(paymentDetailsForm, bindingResult);
+		setupAddPaymentPage(model);
 		final CartData cartData = getCheckoutFacade().getCheckoutCart();
 		model.addAttribute(CART_DATA_ATTR, cartData);
 
@@ -206,79 +192,58 @@ public class PaymentMethodCheckoutStepController extends AbstractCheckoutStepCon
 			return ControllerConstants.Views.Pages.MultiStepCheckout.AddPaymentMethodPage;
 		}
 
-		final CCPaymentInfoData paymentInfoData = new CCPaymentInfoData();
-		fillInPaymentData(paymentDetailsForm, paymentInfoData);
+		Boolean paymentAuthorized;
+		final BrasPagPaymentMethodData paymentInfoData = new BrasPagPaymentMethodData();
+		try{
 
-		final AddressData addressData;
-		if (Boolean.FALSE.equals(paymentDetailsForm.getNewBillingAddress()))
+			fillInPaymentData(paymentDetailsForm, paymentInfoData);
+			braspagFacade.handlePaymentForm(paymentInfoData, request.getRemoteAddr());
+			paymentAuthorized = authorizePayment(paymentInfoData);
+		} catch (final BraspagTimeoutException ignored)
 		{
-			addressData = getCheckoutFacade().getCheckoutCart().getDeliveryAddress();
-			if (addressData == null)
-			{
-				GlobalMessages.addErrorMessage(model,
-						"checkout.multi.paymentMethod.createSubscription.billingAddress.noneSelectedMsg");
-				return ControllerConstants.Views.Pages.MultiStepCheckout.AddPaymentMethodPage;
-			}
-
-			addressData.setBillingAddress(true); // mark this as billing address
-		}
-		else
-		{
-			final AddressForm addressForm = paymentDetailsForm.getBillingAddress();
-			addressData = addressDataUtil.convertToAddressData(addressForm);
-			addressData.setShippingAddress(Boolean.TRUE.equals(addressForm.getShippingAddress()));
-			addressData.setBillingAddress(Boolean.TRUE.equals(addressForm.getBillingAddress()));
-		}
-
-		getAddressVerificationFacade().verifyAddressData(addressData);
-		paymentInfoData.setBillingAddress(addressData);
-
-		final CCPaymentInfoData newPaymentSubscription = getCheckoutFacade().createPaymentSubscription(paymentInfoData);
-		if (!checkPaymentSubscription(model, paymentDetailsForm, newPaymentSubscription))
-		{
+			GlobalMessages.addErrorMessage(model, "checkout.error.payment.timeout");
 			return ControllerConstants.Views.Pages.MultiStepCheckout.AddPaymentMethodPage;
 		}
 
-		model.addAttribute("paymentId", newPaymentSubscription.getId());
-		setCheckoutStepLinksForModel(model, getCheckoutStep());
+		if (!paymentAuthorized) {
+			GlobalMessages.addErrorMessage(model, "checkout.error.payment.unauthorized");
+			return ControllerConstants.Views.Pages.MultiStepCheckout.AddPaymentMethodPage;
+		}
+
+		eyCheckoutFacade.updateCart();
 
 		return getCheckoutStep().nextStep();
 	}
 
-	protected boolean checkPaymentSubscription(final Model model, @Valid final PaymentDetailsForm paymentDetailsForm,
-			final CCPaymentInfoData newPaymentSubscription)
+	@RequestMapping(value = "/payment-type", method = RequestMethod.GET)
+	@RequireHardLogIn
+	public String paymentType(final Model model, final RedirectAttributes redirectAttributes) throws CMSItemNotFoundException
 	{
-		if (newPaymentSubscription != null && StringUtils.isNotBlank(newPaymentSubscription.getSubscriptionId()))
-		{
-			if (Boolean.TRUE.equals(paymentDetailsForm.getSaveInAccount()) && getUserFacade().getCCPaymentInfos(true).size() <= 1)
-			{
-				getUserFacade().setDefaultPaymentInfo(newPaymentSubscription);
-			}
-			getCheckoutFacade().setPaymentDetails(newPaymentSubscription.getId());
-		}
-		else
-		{
-			GlobalMessages.addErrorMessage(model, "checkout.multi.paymentMethod.createSubscription.failedMsg");
-			return false;
-		}
-		return true;
+		return REDIRECT_URL_ADD_PAYMENT_METHOD;
 	}
 
-	protected void fillInPaymentData(@Valid final PaymentDetailsForm paymentDetailsForm, final CCPaymentInfoData paymentInfoData)
+
+	protected void fillInPaymentData(@Valid final BraspagPaymentForm paymentDetailsForm, final BrasPagPaymentMethodData paymentInfoData)
 	{
-		paymentInfoData.setId(paymentDetailsForm.getPaymentId());
-		paymentInfoData.setCardType(paymentDetailsForm.getCardTypeCode());
-		paymentInfoData.setAccountHolderName(paymentDetailsForm.getNameOnCard());
+
+		CartModel cartModel = cartService.getSessionCart();
+
+		paymentInfoData.setCardHolder(paymentDetailsForm.getNameOnCard());
 		paymentInfoData.setCardNumber(paymentDetailsForm.getCardNumber());
-		paymentInfoData.setStartMonth(paymentDetailsForm.getStartMonth());
-		paymentInfoData.setStartYear(paymentDetailsForm.getStartYear());
 		paymentInfoData.setExpiryMonth(paymentDetailsForm.getExpiryMonth());
 		paymentInfoData.setExpiryYear(paymentDetailsForm.getExpiryYear());
-		if (Boolean.TRUE.equals(paymentDetailsForm.getSaveInAccount()) || getCheckoutCustomerStrategy().isAnonymousCheckout())
-		{
-			paymentInfoData.setSaved(true);
-		}
-		paymentInfoData.setIssueNumber(paymentDetailsForm.getIssueNumber());
+
+		final BraspagPaymentModeModel braspagPaymentModeModel =
+				eyCheckoutService.findPaymentInstallmentByCode(paymentDetailsForm.getPaymentInstallmentCard());
+
+		paymentInfoData.setInstallments(braspagPaymentModeModel.getInstallment());
+		paymentInfoData.setSecurityCode(paymentDetailsForm.getSecurityNumber());
+		paymentInfoData.setAmount(cartModel.getTotalPrice());
+		paymentInfoData.setDocumentType(paymentDetailsForm.getDocumentType());
+		paymentInfoData.setDocumentNumber(paymentDetailsForm.getDocumentNumber());
+		paymentInfoData.setCardBrand(paymentDetailsForm.getCard_cardType());
+
+
 	}
 
 	@RequestMapping(value = "/remove", method = RequestMethod.POST)
@@ -327,6 +292,38 @@ public class PaymentMethodCheckoutStepController extends AbstractCheckoutStepCon
 		return getCheckoutStep().nextStep();
 	}
 
+	private boolean authorizePayment(final BrasPagPaymentMethodData paymentInfoData) throws BraspagTimeoutException
+	{
+		CustomerData currentCustomerData;
+		currentCustomerData = customerFacade.getCurrentCustomer();
+
+		CartModel cartModel = cartService.getSessionCart();
+
+		try {
+			boolean cardAuthorized = false;
+
+			cardAuthorized = braspagFacade.authorizePayment(cartModel, currentCustomerData,
+					paymentInfoData.getInstallments(),
+					paymentInfoData.getSecurityCode(),
+					paymentInfoData.getCardNumber(),
+					paymentInfoData.getCardHolder(),
+					paymentInfoData.getCardBrand(),
+					paymentInfoData.getExpiryMonth(),
+					paymentInfoData.getExpiryYear(),
+					paymentInfoData.getDocumentType(),
+					paymentInfoData.getDocumentNumber(),
+					paymentInfoData.getAmount());
+
+			return cardAuthorized;
+		} catch (Exception ex) {
+			LOGGER.error("[Payment] Error authorizing payment for cart: " + cartModel.getCode(), ex);
+			if (ex instanceof BraspagTimeoutException)
+				throw (BraspagTimeoutException) ex;
+		}
+
+		return false;
+	}
+
 	protected CardTypeData createCardTypeData(final String code, final String name)
 	{
 		final CardTypeData cardTypeData = new CardTypeData();
@@ -348,52 +345,20 @@ public class PaymentMethodCheckoutStepController extends AbstractCheckoutStepCon
 		setCheckoutStepLinksForModel(model, getCheckoutStep());
 	}
 
-	protected void setupSilentOrderPostPage(final SopPaymentDetailsForm sopPaymentDetailsForm, final Model model)
-	{
-		try
-		{
-			final PaymentData silentOrderPageData = getPaymentFacade().beginSopCreateSubscription("/checkout/multi/sop/response",
-					"/integration/merchant_callback");
-			model.addAttribute("silentOrderPageData", silentOrderPageData);
-			sopPaymentDetailsForm.setParameters(silentOrderPageData.getParameters());
-			model.addAttribute("paymentFormUrl", silentOrderPageData.getPostUrl());
-		}
-		catch (final IllegalArgumentException e)
-		{
-			model.addAttribute("paymentFormUrl", "");
-			model.addAttribute("silentOrderPageData", null);
-			LOGGER.warn("Failed to set up silent order post page", e);
-			GlobalMessages.addErrorMessage(model, "checkout.multi.sop.globalError");
-		}
 
-		final CartData cartData = getCheckoutFacade().getCheckoutCart();
-		model.addAttribute("silentOrderPostForm", new PaymentDetailsForm());
-		model.addAttribute(CART_DATA_ATTR, cartData);
-		model.addAttribute("deliveryAddress", cartData.getDeliveryAddress());
-		model.addAttribute("sopPaymentDetailsForm", sopPaymentDetailsForm);
-		model.addAttribute("paymentInfos", getUserFacade().getCCPaymentInfos(true));
-		model.addAttribute("sopCardTypes", getSopCardTypes());
-		if (StringUtils.isNotBlank(sopPaymentDetailsForm.getBillTo_country()))
-		{
-			model.addAttribute("regions", getI18NFacade().getRegionsForCountryIso(sopPaymentDetailsForm.getBillTo_country()));
-			model.addAttribute("country", sopPaymentDetailsForm.getBillTo_country());
-		}
-	}
 
 	protected Collection<CardTypeData> getSopCardTypes()
 	{
 		final Collection<CardTypeData> sopCardTypes = new ArrayList<CardTypeData>();
 
-		final List<CardTypeData> supportedCardTypes = getCheckoutFacade().getSupportedCardTypes();
-		for (final CardTypeData supportedCardType : supportedCardTypes)
+		final Set<CreditCardBrandData> creditCardBrandDataSet =
+				eyCreditCardBrandFacade.getAllSupportedCreditCardBrands();
+		for(final CreditCardBrandData creditCardBrandData : creditCardBrandDataSet)
 		{
-			// Add credit cards for all supported cards that have mappings for cybersource SOP
-			if (CYBERSOURCE_SOP_CARD_TYPES.containsKey(supportedCardType.getCode()))
-			{
-				sopCardTypes.add(
-						createCardTypeData(CYBERSOURCE_SOP_CARD_TYPES.get(supportedCardType.getCode()), supportedCardType.getName()));
-			}
+			sopCardTypes.add(
+					createCardTypeData(creditCardBrandData.getCode(), creditCardBrandData.getName()));
 		}
+
 		return sopCardTypes;
 	}
 

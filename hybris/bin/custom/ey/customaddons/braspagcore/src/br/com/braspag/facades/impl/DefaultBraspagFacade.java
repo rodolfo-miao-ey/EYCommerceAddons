@@ -24,6 +24,8 @@ import de.hybris.platform.core.model.order.payment.CreditCardPaymentInfoModel;
 //import de.hybris.platform.core.model.order.payment.PaymentInfoModel;
 import de.hybris.platform.core.model.order.payment.PaymentInfoModel;
 import de.hybris.platform.core.model.user.AddressModel;
+import de.hybris.platform.core.model.user.CustomerModel;
+import de.hybris.platform.core.model.user.UserModel;
 import de.hybris.platform.enumeration.EnumerationService;
 import de.hybris.platform.order.CartService;
 import de.hybris.platform.payment.dto.TransactionStatus;
@@ -573,7 +575,7 @@ public class DefaultBraspagFacade implements BraspagFacade {
     public void handlePaymentForm(BrasPagPaymentMethodData paymentMethodData, String remoteAddress) {
         AbstractOrderModel cartModel;
         cartModel = cartService.getSessionCart();
-        final B2BCustomerModel currentUser = (B2BCustomerModel) userService.getCurrentUser();
+        UserModel currentUser =  userService.getCurrentUser();
 
         //Create payment info
         CreditCardPaymentInfoModel paymentInfo = createPaymentInfo(cartModel, paymentMethodData);

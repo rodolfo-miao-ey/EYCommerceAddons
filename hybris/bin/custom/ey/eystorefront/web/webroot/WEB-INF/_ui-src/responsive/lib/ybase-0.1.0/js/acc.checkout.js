@@ -3,6 +3,7 @@ ACC.checkout = {
 	_autoload: [
 		"bindCheckO",
 		"bindForms",
+		['bindMaskDocument', $('.checkout-paymentmethod').length > 0],
 		"bindSavedPayments"
 	],
 
@@ -40,6 +41,34 @@ ACC.checkout = {
 			});
 		})
 	},
+
+	bindMaskDocument: function () {
+
+                  $('[name="documentNumber"]').mask('000.000.000-00', { reverse: true });
+
+                  $('[name="documentType"]').change(function () {
+                      var value = $(this).val();
+                      if (value) {
+                          var parentForm = $(this).closest('form');
+                          parentForm.find('span.label-document-type').hide();
+                          parentForm.find('#label-' + value).show();
+
+                          var inputDocNumber = parentForm.find('[name=\'documentNumber\']');
+                          inputDocNumber.val('');
+                          if (value == 'CPF') {
+                              inputDocNumber.mask('000.000.000-00', { reverse: true });
+                          }
+                          if (value == 'CNPJ') {
+                              inputDocNumber.mask('00.000.000/0000-00', { reverse: true });
+                          }
+                      }
+                  });
+
+                  $('[name="cardNumber"]').mask('0000 0000 0000 0000', { reverse: true });
+
+                  ACC.checkoutsummary.toggleActionButtons('.place-order-form');
+
+    },
 
 	bindCheckO: function ()
 	{
