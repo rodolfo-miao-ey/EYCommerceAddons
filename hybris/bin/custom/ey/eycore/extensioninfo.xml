@@ -13,6 +13,7 @@
         
         <requires-extension name="acceleratorcms"/>
         <requires-extension name="braspagcore"/>
+        <requires-extension name="b2bapprovalprocess"/>
                 		
         
         <coremodule generated="true" manager="br.com.ey.core.jalo.EyCoreManager" packageroot="br.com.ey.core"/>
