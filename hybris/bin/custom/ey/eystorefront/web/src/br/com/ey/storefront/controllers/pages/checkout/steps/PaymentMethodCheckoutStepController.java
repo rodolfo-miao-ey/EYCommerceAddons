@@ -324,6 +324,38 @@ public class PaymentMethodCheckoutStepController extends AbstractCheckoutStepCon
 		return false;
 	}
 
+	protected void setupSilentOrderPostPage(final SopPaymentDetailsForm sopPaymentDetailsForm, final Model model)
+	{
+		try
+		{
+			final PaymentData silentOrderPageData = getPaymentFacade().beginSopCreateSubscription("/checkout/multi/sop/response",
+					"/integration/merchant_callback");
+			model.addAttribute("silentOrderPageData", silentOrderPageData);
+			sopPaymentDetailsForm.setParameters(silentOrderPageData.getParameters());
+			model.addAttribute("paymentFormUrl", silentOrderPageData.getPostUrl());
+		}
+		catch (final IllegalArgumentException e)
+		{
+			model.addAttribute("paymentFormUrl", "");
+			model.addAttribute("silentOrderPageData", null);
+			LOGGER.warn("Failed to set up silent order post page", e);
+			GlobalMessages.addErrorMessage(model, "checkout.multi.sop.globalError");
+		}
+
+		final CartData cartData = getCheckoutFacade().getCheckoutCart();
+		model.addAttribute("silentOrderPostForm", new PaymentDetailsForm());
+		model.addAttribute(CART_DATA_ATTR, cartData);
+		model.addAttribute("deliveryAddress", cartData.getDeliveryAddress());
+		model.addAttribute("sopPaymentDetailsForm", sopPaymentDetailsForm);
+		model.addAttribute("paymentInfos", getUserFacade().getCCPaymentInfos(true));
+		model.addAttribute("sopCardTypes", getSopCardTypes());
+		if (StringUtils.isNotBlank(sopPaymentDetailsForm.getBillTo_country()))
+		{
+			model.addAttribute("regions", getI18NFacade().getRegionsForCountryIso(sopPaymentDetailsForm.getBillTo_country()));
+			model.addAttribute("country", sopPaymentDetailsForm.getBillTo_country());
+		}
+	}
+
 	protected CardTypeData createCardTypeData(final String code, final String name)
 	{
 		final CardTypeData cardTypeData = new CardTypeData();
