@@ -15,6 +15,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import de.hybris.platform.commercefacades.customer.CustomerFacade;
+import de.hybris.platform.servicelayer.session.SessionService;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
 import org.springframework.stereotype.Controller;
@@ -34,6 +36,13 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @RequestMapping(value = "/login")
 public class LoginPageController extends AbstractLoginPageController
 {
+
+	@Resource
+	private SessionService sessionService;
+
+	@Resource
+	private CustomerFacade customerFacade;
+
 	private HttpSessionRequestCache httpSessionRequestCache;
 
 	@Override
@@ -75,6 +84,17 @@ public class LoginPageController extends AbstractLoginPageController
 		{
 			storeReferer(referer, request, response);
 		}
+
+		if (customerFacade.getCurrentCustomer() != null && !customerFacade.getCurrentCustomer().getUid().equals("anonymous")){
+			if(sessionService.getAttribute("productRedirect") != null) {
+				String productUrl = sessionService.getAttribute("productRedirect");
+				return REDIRECT_PREFIX + productUrl;
+			}else{
+				return REDIRECT_PREFIX + "/";
+			}
+		}
+
+
 		return getDefaultLoginPage(loginError, session, model);
 	}
 
