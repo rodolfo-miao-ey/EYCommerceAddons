@@ -181,6 +181,41 @@ function dropdownClearMenus(e) {
     })
   };
 
+  function clickWishList(value, method) {
+  	var productCode = value;
+      if(method == 'add'){
+  	var url = '/eystorefront/electronics/en/wishlist/add/' + productCode;
+  	$.get(url)
+  		.done(function (data) {
+  			console.log(data);
+  			if(data == "ok"){
+  			window.location.reload(false);
+  			} else {
+  			window.location = '/eystorefront/electronics/en/login';
+  			}
+
+  		})
+  		.fail(function () {
+  			console.log('Erro');
+  		});
+  	}else{
+  	var url = '/eystorefront/electronics/en/wishlist/delete/' + productCode;
+  	$.get(url)
+  		.done(function (data) {
+  			console.log(data);
+  			if(data == "ok"){
+  			window.location.reload(false);
+  			} else {
+  			window.location = '/eystorefront/electronics/en/login';
+  			}
+  		})
+  		.fail(function () {
+  			console.log('Erro');
+  		});
+  	}
+
+  };
+
  function dropdownToggle(e) {
 	var $this = $(this)
 

@@ -12,4 +12,11 @@
 		<property name="code" type="String"/>
 		<property name="name" type="String"/>
 	</bean>
+
+	<bean class="br.com.ey.facades.order.data.EyCustomerWishesData">
+		<property name="product" type="de.hybris.platform.commercefacades.product.data.ProductData"/>
+		<property name="url"          type="java.lang.String"/>
+		<property name="name"         type="java.lang.String"/>
+	</bean>
+
 </beans>

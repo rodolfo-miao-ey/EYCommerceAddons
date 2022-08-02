@@ -32,7 +32,7 @@ target/
 .DS_Store
 .idea
 *.idea
-#.classpath
+.classpath
 idea-module-files/*
 idea-module-files/
  

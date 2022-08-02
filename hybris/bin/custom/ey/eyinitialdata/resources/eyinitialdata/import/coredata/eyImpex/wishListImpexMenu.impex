@@ -1,0 +1,38 @@
+$lang = en
+$version = Staged
+$contentCatalog = electronicsContentCatalog
+$contentCV = catalogVersion(CatalogVersion.catalog(Catalog.id[default=$contentCatalog]), CatalogVersion.version[default=$version])[default=$contentCatalog:$version]
+$productCatalog = electronicsProductCatalog
+$productCV = catalogVersion(catalog(id[default=$productCatalog]), version[default=$version])[unique=true, default=$productCatalog:$version]
+$picture = media(code, $contentCV)
+$medias = medias(code, $contentCV);
+$mediaContainer = media(qualifier, $contentCV)[lang=$lang];
+$siteResource=jar:br.com.ey.initialdata.setup.InitialDataSystemSetup&/eyinitialdata/import/contentCatalogs/$contentCatalog
+
+INSERT_UPDATE ContentPage;$contentCV[unique=true];uid[unique=true];name;masterTemplate(uid,$contentCV);label;defaultPage[default='true'];approvalStatus(code)[default='approved'];homepage[default='false'];previewImage(code, $contentCV)
+                         ; ; myWishesPage          ; EY Wish List             ; AccountPageTemplate  ; my-wishes
+
+
+INSERT_UPDATE ContentSlot ; $contentCV[unique = true] ; uid[unique = true]       ; name                        ; active ; cmsComponents(&componentRef)
+                          ;                           ; MyWishesSlot              ; My Wishes Slot             ; true   ; MyWishesComponent
+
+INSERT_UPDATE ContentSlotForPage ; $contentCV[unique = true] ; uid[unique = true] ; position[unique = true] ; page(uid, $contentCV)[unique = true][default = 'myWishesPage'] ; contentSlot(uid, $contentCV)[unique = true]
+                                 ;                           ; MyWishesContent    ; BodyContent             ;                                                               ; MyWishesSlot
+
+INSERT_UPDATE JspIncludeComponent ; $contentCV[unique = true] ; uid[unique = true]            ; name                       ; page                                                                          ; actions(uid, $contentCV) ; &componentRef
+                                  ;                           ; MyWishesComponent             ; Meus Wishes Component      ; /WEB-INF/views/responsive/pages/account/accountWishesPage.jsp                 ;                          ; MyWishesComponent
+
+
+INSERT_UPDATE CMSLinkComponent ; $contentCV[unique = true] ; uid[unique = true] ; name             ; url                               ; &linkRef         ; target(code)[default = 'sameWindow']
+                               ;                           ; WishesLink         ; WishesLink        ; /my-account/wishes               ; WishesLink       ;
+
+INSERT_UPDATE CMSNavigationNode ; uid[unique = true]  ; $contentCV[unique = true] ; name          ; parent(uid, $contentCV) ; links(&linkRef) ; &nodeRef
+                                ; WishesNavNode       ;                           ; Wishes        ; MyAccountNavNode        ;                 ; WishesNavNode
+
+
+INSERT_UPDATE CMSNavigationEntry ; uid[unique = true]       ; $contentCV[unique = true] ; name                     ; navigationNode(&nodeRef) ; item(&linkRef)   ;
+                                 ; WishesNavNodeEntry       ;                           ; WishesNavNodeEntry       ; WishesNavNode            ; WishesLink        ;
+
+# CMS Link Components
+UPDATE CMSLinkComponent ; $contentCV[unique = true] ; uid[unique = true] ; linkName[lang = $lang]
+                        ;                           ; WishesLink         ; "EY Wish List"                                  
