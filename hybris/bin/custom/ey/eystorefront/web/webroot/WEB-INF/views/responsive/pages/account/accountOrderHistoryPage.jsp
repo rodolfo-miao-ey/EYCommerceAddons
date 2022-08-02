@@ -10,83 +10,9 @@
 
 <c:set var="searchUrl" value="/my-account/orders?sort=${ycommerce:encodeUrl(searchPageData.pagination.sort)}"/>
 
- <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-    <script type="text/javascript">
-      google.charts.load('current', {'packages':['corechart', 'bar']});
-      google.charts.setOnLoadCallback(drawChart);
-      google.charts.setOnLoadCallback(drawStuff);
-
-      function drawChart() {
-
-        var data = google.visualization.arrayToDataTable([
-          ['Status', 'Pruchase Status'],
-          ['In Process',     3],
-          ['Completed',    1]
-        ]);
-
-        var options = {
-          width: 500,
-          height: 400,
-          is3D: true,
-          title: 'Status'
-        };
-
-        var chart = new google.visualization.PieChart(document.getElementById('piechart'));
-
-        chart.draw(data, options);
-      }
-
-      function drawStuff() {
-        var data = new google.visualization.arrayToDataTable([
-          ['Month', 'Value'],
-          ["January", 144.55],
-          ["February ", 1531.60],
-          ["March", 112.50],
-          ["April", 6350.00],
-          ["May", 8350.00],
-          ["June", 5250.00],
-          ["July", 9350.00],
-          ["August", 0.00],
-          ["September", 0.00],
-          ["October", 0.00],
-          ["November", 0.00],
-          ['December', 0.00]
-        ]);
-
-        var options = {
-          width: 500,
-          height: 400,
-          legend: { position: 'none' },
-          chart: {
-            title: 'Purchase Value',
-            subtitle: 'Purchase totals by month' },
-          axes: {
-            x: {
-              0: { side: 'top', label: '2022'} // Top x-axis.
-            }
-          },
-          bar: { groupWidth: "90%" }
-        };
-
-        var chart = new google.charts.Bar(document.getElementById('top_x_div'));
-        // Convert the Classic options to Material options.
-        chart.draw(data, google.charts.Bar.convertOptions(options));
-      };
-
-    </script>
-
-
 <div class="account-section-header">
 	<spring:theme code="text.account.orderHistory" />
 </div>
-
-  <table class="columns">
-      <tr>
-        <td><div id="piechart"></div></td>
-        <td><div id="top_x_div"></div></td>
-      </tr>
-    </table>
-
 
 <c:if test="${empty searchPageData.results}">
 	<div class="account-section-content content-empty">
