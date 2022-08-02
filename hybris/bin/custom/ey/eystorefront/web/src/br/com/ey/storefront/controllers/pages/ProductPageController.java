@@ -3,6 +3,7 @@
  */
 package br.com.ey.storefront.controllers.pages;
 
+import br.com.ey.core.model.CustomerWishListModel;
 import de.hybris.platform.acceleratorfacades.futurestock.FutureStockFacade;
 import de.hybris.platform.acceleratorservices.controllers.page.PageType;
 import de.hybris.platform.acceleratorstorefrontcommons.breadcrumb.impl.ProductBreadcrumbBuilder;
@@ -29,19 +30,18 @@ import de.hybris.platform.commercefacades.product.data.ProductData;
 import de.hybris.platform.commercefacades.product.data.ReviewData;
 import de.hybris.platform.commerceservices.url.UrlResolver;
 import de.hybris.platform.core.model.product.ProductModel;
+import de.hybris.platform.core.model.user.CustomerModel;
 import de.hybris.platform.product.ProductService;
 import de.hybris.platform.servicelayer.exceptions.UnknownIdentifierException;
+import de.hybris.platform.servicelayer.model.ModelService;
+import de.hybris.platform.servicelayer.session.SessionService;
+import de.hybris.platform.servicelayer.time.TimeService;
+import de.hybris.platform.servicelayer.user.UserService;
 import de.hybris.platform.util.Config;
 import br.com.ey.storefront.controllers.ControllerConstants;
 
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -111,6 +111,18 @@ public class ProductPageController extends AbstractPageController
 	@Resource(name = "futureStockFacade")
 	private FutureStockFacade futureStockFacade;
 
+	@Resource(name = "userService")
+	private UserService userService;
+
+	@Resource(name = "sessionService")
+	private SessionService sessionService;
+
+	@Resource(name = "timeService")
+	private TimeService timeService;
+
+	@Resource
+	private ModelService modelService;
+
 	@RequestMapping(value = PRODUCT_CODE_PATH_VARIABLE_PATTERN, method = RequestMethod.GET)
 	public String productDetail(@PathVariable("productCode") final String productCode, final Model model,
 			final HttpServletRequest request, final HttpServletResponse response)
@@ -122,6 +134,54 @@ public class ProductPageController extends AbstractPageController
 		final ProductData productData = productFacade.getProductForCodeAndOptions(productCode, extraOptions);
 
 		final String redirection = checkRequestUrl(request, response, productDataUrlResolver.resolve(productData));
+
+		String isWish = "";
+		Boolean found = false;
+
+		final CustomerModel customerModel = (CustomerModel) userService.getCurrentUser();
+
+		if (customerModel.getUid().equals("anonymous")){
+			isWish = "nok";
+		}else {
+			isWish = "nok";
+			if(sessionService.getAttribute("productRedirect") != null) {
+				sessionService.removeAttribute("productRedirect");
+				List<CustomerWishListModel> wishlist = new ArrayList<>();
+				if (customerModel.getCustomerWishList() != null && !customerModel.getCustomerWishList().isEmpty()) {
+					wishlist.addAll(customerModel.getCustomerWishList());
+				}
+
+				for (final Iterator<CustomerWishListModel> itr = wishlist.iterator(); itr.hasNext(); ) {
+					final CustomerWishListModel wish = itr.next();
+					if (wish.getProduct().equals(productData.getCode())) {
+						found = true;
+					}
+				}
+
+				if (!found) {
+					CustomerWishListModel wishData = new CustomerWishListModel();
+					wishData.setDateTime(timeService.getCurrentTime().getTime());
+					wishData.setProduct(productData.getCode());
+					modelService.save(wishData);
+					wishlist.add(wishData);
+				}
+
+				if (!wishlist.isEmpty()) {
+					customerModel.setCustomerWishList(wishlist);
+					modelService.save(customerModel);
+				}
+			}
+
+			List<CustomerWishListModel> wishList = new ArrayList<>(customerModel.getCustomerWishList());
+			for (final Iterator<CustomerWishListModel> itr = wishList.iterator(); itr.hasNext(); ) {
+				final CustomerWishListModel wish = itr.next();
+				if (wish.getProduct().equals(productData.getCode())) {
+					isWish = "ok";
+					break;
+				}
+			}
+		}
+
 		if (StringUtils.isNotEmpty(redirection))
 		{
 			return redirection;
@@ -135,6 +195,7 @@ public class ProductPageController extends AbstractPageController
 		model.addAttribute(new ReviewForm());
 		model.addAttribute("pageType", PageType.PRODUCT.name());
 		model.addAttribute("futureStockEnabled", Boolean.valueOf(Config.getBoolean(FUTURE_STOCK_ENABLED, false)));
+		model.addAttribute("isWish",isWish);
 
 		final String metaKeywords = MetaSanitizerUtil.sanitizeKeywords(productData.getKeywords());
 		final String metaDescription = MetaSanitizerUtil.sanitizeDescription(productData.getDescription());

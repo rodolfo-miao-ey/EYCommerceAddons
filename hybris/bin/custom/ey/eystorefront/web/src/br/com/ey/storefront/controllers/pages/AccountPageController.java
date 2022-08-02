@@ -3,6 +3,8 @@
  */
 package br.com.ey.storefront.controllers.pages;
 
+import br.com.ey.core.model.CustomerWishListModel;
+import br.com.ey.facades.order.data.EyCustomerWishesData;
 import de.hybris.platform.acceleratorfacades.ordergridform.OrderGridFormFacade;
 import de.hybris.platform.acceleratorfacades.product.data.ReadOnlyOrderGridData;
 import de.hybris.platform.acceleratorstorefrontcommons.annotations.RequireHardLogIn;
@@ -20,6 +22,11 @@ import de.hybris.platform.acceleratorstorefrontcommons.forms.validation.EmailVal
 import de.hybris.platform.acceleratorstorefrontcommons.forms.validation.PasswordValidator;
 import de.hybris.platform.acceleratorstorefrontcommons.forms.validation.ProfileValidator;
 import de.hybris.platform.acceleratorstorefrontcommons.forms.verification.AddressVerificationResultHandler;
+import de.hybris.platform.basecommerce.model.site.BaseSiteModel;
+import de.hybris.platform.catalog.CatalogVersionService;
+import de.hybris.platform.cms2.model.site.CMSSiteModel;
+//import de.hybris.platform.cmsfacades.data.ProductData;
+import de.hybris.platform.commercefacades.product.data.ProductData;
 import de.hybris.platform.commercefacades.consent.CustomerConsentDataStrategy;
 import de.hybris.platform.acceleratorstorefrontcommons.util.AddressDataUtil;
 import de.hybris.platform.cms2.exceptions.CMSItemNotFoundException;
@@ -33,6 +40,7 @@ import de.hybris.platform.commercefacades.order.OrderFacade;
 import de.hybris.platform.commercefacades.order.data.CCPaymentInfoData;
 import de.hybris.platform.commercefacades.order.data.OrderData;
 import de.hybris.platform.commercefacades.order.data.OrderHistoryData;
+import de.hybris.platform.commercefacades.product.ProductFacade;
 import de.hybris.platform.commercefacades.product.ProductOption;
 import de.hybris.platform.commercefacades.user.UserFacade;
 import de.hybris.platform.commercefacades.user.data.AddressData;
@@ -48,22 +56,25 @@ import de.hybris.platform.commerceservices.enums.CountryType;
 import de.hybris.platform.commerceservices.search.pagedata.PageableData;
 import de.hybris.platform.commerceservices.search.pagedata.SearchPageData;
 import de.hybris.platform.commerceservices.util.ResponsiveUtils;
+import de.hybris.platform.core.model.product.ProductModel;
+import de.hybris.platform.core.model.user.CustomerModel;
+import de.hybris.platform.product.ProductService;
 import de.hybris.platform.servicelayer.exceptions.AmbiguousIdentifierException;
 import de.hybris.platform.servicelayer.exceptions.ModelNotFoundException;
 import de.hybris.platform.servicelayer.exceptions.UnknownIdentifierException;
+import de.hybris.platform.servicelayer.model.ModelService;
+import de.hybris.platform.servicelayer.user.UserService;
+import de.hybris.platform.site.BaseSiteService;
 import de.hybris.platform.util.Config;
+import de.hybris.platform.catalog.model.CatalogVersionModel;
 import br.com.ey.storefront.controllers.ControllerConstants;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import javax.annotation.Resource;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
@@ -193,6 +204,25 @@ public class AccountPageController extends AbstractSearchPageController
 
 	@Resource(name = "addressDataUtil")
 	private AddressDataUtil addressDataUtil;
+
+	@Resource(name = "userService")
+	private UserService userService;
+
+	@Resource
+	private BaseSiteService baseSiteService;
+
+	@Resource
+	private CatalogVersionService catalogVersionService;
+
+	@Resource(name = "productService")
+	private ProductService productService;
+
+	@Resource(name = "productVariantFacade")
+	private ProductFacade productFacade;
+
+	@Resource
+	private ModelService modelService;
+
 
 	protected PasswordValidator getPasswordValidator()
 	{
@@ -1002,4 +1032,84 @@ public class AccountPageController extends AbstractSearchPageController
 		customerFacade.closeAccount();
 		request.logout();
 	}
+
+	@RequestMapping(value = "/wishes", method = RequestMethod.GET)
+	public String myWishes(Model model,
+						   HttpServletRequest httpRequest,
+						   HttpServletResponse httpResponse) throws CMSItemNotFoundException {
+
+		final CustomerModel customerModel = (CustomerModel) userService.getCurrentUser();
+		final ArrayList<EyCustomerWishesData> wishList = new ArrayList<>();
+		final BaseSiteModel baseSiteModel = baseSiteService.getCurrentBaseSite();
+		final CMSSiteModel cmsSiteModel = (CMSSiteModel) baseSiteModel;
+		final CatalogVersionModel catalogVersion = catalogVersionService.getCatalogVersion(cmsSiteModel.getDefaultCatalog().getId(), "Online");
+		ProductModel ProductModel = null;
+
+		final List<ProductOption> options = new ArrayList<>(Arrays.asList(ProductOption.VARIANT_FIRST_VARIANT, ProductOption.BASIC,
+				ProductOption.URL, ProductOption.PRICE, ProductOption.SUMMARY, ProductOption.DESCRIPTION, ProductOption.GALLERY,
+				ProductOption.CATEGORIES, ProductOption.REVIEW, ProductOption.PROMOTIONS, ProductOption.CLASSIFICATION,
+				ProductOption.VARIANT_FULL, ProductOption.STOCK, ProductOption.VOLUME_PRICES, ProductOption.PRICE_RANGE,
+				ProductOption.DELIVERY_MODE_AVAILABILITY));
+
+
+		for (final Iterator<CustomerWishListModel> itr = customerModel.getCustomerWishList().iterator(); itr.hasNext(); ) {
+			final CustomerWishListModel wish = itr.next();
+
+			EyCustomerWishesData wishesData = new EyCustomerWishesData();
+
+			try {
+				ProductModel = (ProductModel) productService.getProductForCode(catalogVersion, wish.getProduct());
+			} catch (final UnknownIdentifierException ex) {
+				continue;
+			} catch (final Exception ex) {
+				continue;
+			}
+
+			ProductData productData = productFacade.getProductForCodeAndOptions(ProductModel.getCode(), options);
+
+			wishesData.setProduct(productData);
+			wishesData.setName(productData.getName());
+			wishesData.setUrl(productData.getUrl());
+
+
+			wishList.add(wishesData);
+		}
+		if(!wishList.isEmpty()) {
+			model.addAttribute(wishList);
+			model.addAttribute("wishList", wishList);
+		}
+
+		final ContentPageModel closeAccountPage = getContentPageForLabelOrId("myWishesPage");
+		storeCmsPageInModel(model, closeAccountPage);
+		setUpMetaDataForContentPage(model, closeAccountPage);
+		model.addAttribute(ThirdPartyConstants.SeoRobots.META_ROBOTS, ThirdPartyConstants.SeoRobots.NOINDEX_NOFOLLOW);
+		return getViewForPage(model);
+	}
+
+	@RequestMapping(value = "/wishes/delete",  method = RequestMethod.GET)
+	public String deleteWishes(@RequestParam(value = "product") final String product,
+							   final Model model,
+							   final HttpServletRequest httpRequest,
+							   final HttpServletResponse httpResponse,
+							   final BindingResult bindingResult) throws CMSItemNotFoundException {
+
+		final CustomerModel customerModel = (CustomerModel) userService.getCurrentUser();
+		List<CustomerWishListModel> wishList = new ArrayList<>(customerModel.getCustomerWishList());
+
+		for (final Iterator<CustomerWishListModel> itr = wishList.iterator(); itr.hasNext(); ) {
+			final CustomerWishListModel wish = itr.next();
+			if(wish.getProduct().equals(product)){
+				itr.remove();
+
+				modelService.remove(wish);
+				break;
+			}
+		}
+
+		customerModel.setCustomerWishList(wishList);
+		modelService.save(customerModel);
+		return REDIRECT_PREFIX + "/my-account/wishes";
+
+	}
+
 }

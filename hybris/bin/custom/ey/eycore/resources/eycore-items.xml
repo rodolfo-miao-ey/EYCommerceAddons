@@ -8,6 +8,10 @@
         <collectiontype code="GenderList" elementtype="Gender" autocreate="true" generate="true" type="list"/>
         <collectiontype code="SwatchColorSet" elementtype="SwatchColorEnum" autocreate="true" generate="true"
                         type="set"/>
+
+        <collectiontype code="CustomerWishLists" elementtype="CustomerWishList" autocreate="true"
+                        generate="true" type="list"/>
+
     </collectiontypes>
 
     <enumtypes>
@@ -103,6 +107,33 @@
                 </attributes>
             </itemtype>
         </typegroup>
+
+        <typegroup name="EyTables">
+        <itemtype code="CustomerWishList" generate="true" autocreate="true">
+            <deployment table="CustomerWishList" typecode="16199"/>
+            <attributes>
+                <attribute autocreate="true" qualifier="dateTime" type="java.lang.Long">
+                    <modifiers read="true" write="true" search="true" optional="true" initial="false"
+                               unique="true"/>
+                    <persistence type="property"/>
+                </attribute>
+                <attribute autocreate="true" qualifier="product" type="java.lang.String">
+                    <modifiers read="true" write="true" search="true" optional="false" initial="true"/>
+                    <persistence type="property"/>
+                </attribute>
+            </attributes>
+        </itemtype>
+
+            <itemtype code="Customer" generate="false" autocreate="false">
+            <attributes>
+                <attribute autocreate="true" qualifier="customerWishList" type="CustomerWishLists">
+                    <modifiers read="true" write="true" search="true" optional="true"/>
+                    <persistence type="property"/>
+                </attribute>
+            </attributes>
+            </itemtype>
+        </typegroup>
+
 
     </itemtypes>
 </items>
