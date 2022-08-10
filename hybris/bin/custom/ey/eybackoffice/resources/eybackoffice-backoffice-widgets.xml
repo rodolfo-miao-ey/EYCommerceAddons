@@ -5,4 +5,35 @@
 <widgets xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:noNamespaceSchemaLocation="http://www.hybris.com/schema/cockpitng/widgets.xsd">
 
-</widgets>
+	<widget-extension widgetId="backofficeMainSlot">
+
+		<widget id="eybackoffice" widgetDefinitionId="com.hybris.cockpitng.flexiblelayout" slotId="perspectives"
+				template="false" title="Rodolfo">
+
+			<widget id="eybackoffice-toolbar" widgetDefinitionId="com.hybris.backoffice.widgets.toolbar"
+					template="false" slotId="sidebar">
+				<setting key="widgetStyleClass" type="String" value="yw-pcmbackoffice-navibar"/>
+				<setting key="toolbarActions" type="String" value="eybackoffice-navibar-actions"/>
+				<setting key="viewMode" type="String" value="Vertical"/>
+				<setting key="configuration.authority.enabled" type="Boolean">true</setting>
+				<virtual-sockets>
+					<input id="selected" type="java.lang.String" multiplicity="Collection"/>
+					<output id="output" type="java.lang.String"/>
+				</virtual-sockets>
+			</widget>
+
+			<widget id="eybackoffice-perspective" widgetDefinitionId="eybackofficepackage.widgets.ybackofficewidget"
+					slotId="contents" template="false" title="Rodolfo">
+				<setting key="widgetStyleClass" type="String"></setting>
+				<setting key="widgetStyleAttribute" type="String"></setting>
+				<virtual-sockets/>
+			</widget>
+			<setting key="widgetStyleClass" type="String"></setting>
+			<setting key="widgetStyleAttribute" type="String"></setting>
+			<setting key="perspectiveImageUrl" value="/cng/images/perspective.png"
+					 type="String" />
+			<virtual-sockets/>
+		</widget>
+	</widget-extension>
+ </widgets>
+

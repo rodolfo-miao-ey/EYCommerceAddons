@@ -3,6 +3,9 @@
  Copyright (c) 2019 SAP SE or an SAP affiliate company. All rights reserved.
 -->
 <config xmlns="http://www.hybris.com/cockpit/config"
+		xmlns:y="http://www.hybris.com/cockpit/config/hybris"
+		xmlns:yc="http://www.hybris.com/cockpitng/config/common"
+		xmlns:dsb="http://www.hybris.com/cockpitng/config/dashboard"
 	xmlns:na="http://www.hybris.com/cockpitng/config/notifications">
 
 	<context merge-by="module" component="editorareaactions" type="Consignment">
@@ -22,5 +25,61 @@
 	        </na:notifications>
 	   </na:notification-area>
 	</context>
+
+	<context component="eybackoffice-navibar-actions" module="eybackoffice">
+		<y:actions>
+			<y:group qualifier="common" position="10">
+				<y:action action-id="com.hybris.cockpitng.action.toggle" id="ey-backoffice-dashboard-view"
+						  position="10">
+					<y:parameter>
+						<yc:name>outputValue</yc:name>
+						<yc:value>"eybackoffice-dashboard-view"</yc:value>
+					</y:parameter>
+					<y:parameter>
+						<yc:name>defaultActive</yc:name>
+						<yc:value>true</yc:value>
+					</y:parameter>
+					<y:parameter>
+						<yc:name>toggleInput</yc:name>
+						<yc:value>selected</yc:value>
+					</y:parameter>
+					<y:parameter>
+						<yc:name>viewMode</yc:name>
+						<yc:value>iconAndText</yc:value>
+					</y:parameter>
+					<y:parameter>
+						<yc:name>iconUri</yc:name>
+						<yc:value>cng/images/icon_menu_dashboard.svg</yc:value>
+					</y:parameter>
+					<y:parameter>
+						<yc:name>actionName</yc:name>
+						<yc:value>label.pcmbackoffice.dashboard</yc:value>
+					</y:parameter>
+				</y:action>
+			</y:group>
+		</y:actions>
+	</context>
+
+	<!-- PCM Backoffice Dashboard -->
+	<context component="eybackoffice-dashboard-actions" principal="backofficeadministratorrole" module="eybackoffice">
+		<y:actions>
+			<y:group qualifier="common">
+				<y:label>actiongroup.common</y:label>
+				<y:action action-id="com.hybris.cockpitng.action.misc.refresh" property="currentObject"/>
+			</y:group>
+		</y:actions>
+	</context>
+
+	<context component="eybackoffice-dashboard-view" module="eybackoffice">
+		<dsb:dashboard defaultGridId="regular">
+			<dsb:grid minScreenWidth="1" maxScreenWidth="700" id="small" unassigned="exclude">
+				<dsb:placement widgetId="eybackoffice-perspective" y="1"/>
+			</dsb:grid>
+			<dsb:grid minScreenWidth="701" id="regular" unassigned="exclude">
+				<dsb:placement widgetId="eybackoffice-perspective" x="1"/>
+			</dsb:grid>
+		</dsb:dashboard>
+	</context>
+
 
 </config>

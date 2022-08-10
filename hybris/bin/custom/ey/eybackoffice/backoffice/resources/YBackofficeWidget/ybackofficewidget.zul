@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<widget xmlns="http://www.zkoss.org/2005/zul"
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xsi:schemaLocation="http://www.zkoss.org/2005/zul http://www.hybris.com/schema/cockpitng/zul/zul.xsd"
+ 		height="90%">
+
+	<hbox>
+		<image src="${wr}/images/EYLogo.jpg"/>
+		<separator/>
+	</hbox>
+
+	<splitlayout  vflex="1" hflex="1">
+		<div sclass="area" hflex="1" vflex="1">
+			<label value="Area 1"/>
+			<grid vflex="1">
+				<columns menupopup="auto">
+					<column label="Code" sort="auto"/>
+					<column label="Base Store" sort="auto"/>
+					<column label="Value" sort="auto"/>
+					<column label="Payment Type" sort="auto"/>
+				</columns>
+				<rows>
+					<row>
+						<label value="451525454"/>
+						<label value="Electronics Store"/>
+						<label value="$456.69"/>
+						<label value="Billet"/>
+					</row>
+					<row>
+						<label value="451525453"/>
+						<label value="Electronics Store"/>
+						<label value="$456.69"/>
+						<label value="Billet"/>
+					</row>
+					<row>
+						<label value="451525452"/>
+						<label value="PowerTools Store"/>
+						<label value="$1456.69"/>
+						<label value="Master Card"/>
+					</row>
+					<row>
+						<label value="451525451"/>
+						<label value="PowerTools Store"/>
+						<label value="$1456.69"/>
+						<label value="Master Card"/>
+					</row>
+					<row>
+						<label value="451525450"/>
+						<label value="Electronics Store"/>
+						<label value="$456.69"/>
+						<label value="Billet"/>
+					</row>
+					<row>
+						<label value="Rick Perlstein"/>
+						<label value="Electronics Store"/>
+						<label value="$456.69"/>
+						<label value="Pix"/>
+					</row>
+					<row>
+						<label value="Rick Perlstein"/>
+						<label value="Electronics Store"/>
+						<label value="$456.69"/>
+						<label value="Debit"/>
+					</row>
+				</rows>
+			</grid>
+		</div>
+		<splitlayout vflex="1" hflex="1" orient="horizontal" >
+			<div sclass="area" vflex="1" hflex="1">
+				<charts id="chart" type="line" width="700"	height="500" title="Purchases by Month" />
+			</div>
+			<div sclass="area" vflex="1"  hflex="2">
+				<charts id="chart2" type="pie" width="500"	height="500" title="Products Wishes"/>
+			</div>
+		</splitlayout>
+	</splitlayout>
+
+
+</widget>

@@ -35,4 +35,4 @@ INSERT_UPDATE CMSNavigationEntry ; uid[unique = true]       ; $contentCV[unique 
 
 # CMS Link Components
 UPDATE CMSLinkComponent ; $contentCV[unique = true] ; uid[unique = true] ; linkName[lang = $lang]
-                        ;                           ; WishesLink         ; "EY Wish List"                                  
+                        ;                           ; WishesLink         ; "EY Wish List"
