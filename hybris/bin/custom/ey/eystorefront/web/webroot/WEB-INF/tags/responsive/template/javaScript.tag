@@ -94,6 +94,10 @@
 		<c:forEach items="${addOnJavaScriptPaths}" var="addOnJavaScript">
 		    <script src="${fn:escapeXml(addOnJavaScript)}"></script>
 		</c:forEach>
+
+        <%-- jQuery Mask --%>
+       <script src="${commonResourcePathHtml}/js/jquery.mask.js"></script>
+       <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-maskmoney/3.0.2/jquery.maskMoney.min.js"></script>
 		
 	</c:otherwise>
 </c:choose>

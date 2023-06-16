@@ -52,7 +52,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 
 @Controller
-@RequestMapping(value = "/checkout/multi/payment-method")
+@RequestMapping(value = "removed")
 public class PaymentMethodCheckoutStepController extends AbstractCheckoutStepController
 {
 	protected static final Map<String, String> CYBERSOURCE_SOP_CARD_TYPES = new HashMap<>();

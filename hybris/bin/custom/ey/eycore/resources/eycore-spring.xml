@@ -538,4 +538,64 @@
 		<property name="itemCleanupHooks" ref="csTicketRetentionHooks"/>
 		<property name="ticketBusinessService" ref="ticketBusinessService"/>
 	</bean>
+
+	<alias name="defaultEyCheckoutService" alias="eyCheckoutService"/>
+	<bean name="defaultEyCheckoutService" parent="defaultCommerceCheckoutService"
+		  class="br.com.ey.core.services.order.impl.DefaultEyCheckoutService">
+		<property name="eyPaymentModeDao" ref="eyPaymentModeDao" />
+	</bean>
+
+	<alias name="defaultEyPaymentModeDao" alias="eyPaymentModeDao"/>
+	<bean id="defaultEyPaymentModeDao" class="br.com.ey.core.dao.impl.DefaultEyPaymentModeDao">
+		<constructor-arg value="Warehouse" />
+	</bean>
+
+	<alias name="defaultEyCreditCardBrandDAO" alias="eyCreditCardBrandDAO"/>
+	<bean id="defaultEyCreditCardBrandDAO" class="br.com.ey.core.dao.impl.DefaultEyCreditCardBrandDAO">
+		<property name="flexibleSearchService" ref="flexibleSearchService" />
+	</bean>
+
+	<alias name="defaultEyCreditCardBrandService" alias="eyCreditCardBrandService"/>
+	<bean id="defaultEyCreditCardBrandService" class="br.com.ey.core.services.payment.impl.DefaultEyCreditCardBrandService">
+		<property name="baseStoreService" ref="baseStoreService" />
+		<property name="eyCreditCardBrandDAO" ref="eyCreditCardBrandDAO" />
+	</bean>
+
+
+	<alias alias="createOrderFromCartStrategy" name="defaultEyCreateOrderFromCartStrategy"/>
+	<bean id="defaultEyCreateOrderFromCartStrategy"
+		  class="br.com.ey.core.strategies.impl.DefaultEyCreateOrderFromCartStrategy">
+		<property name="cartValidator" ref="cartValidator"/>
+		<property name="cloneAbstractOrderStrategy" ref="cloneAbstractOrderStrategy"/>
+		<property name="keyGenerator"
+				  ref="#{configurationService.configuration.getProperty('commerceservices.orderCode.keyGenerator')}"/>
+	</bean>
+
+	<bean id="defaultEyB2BCreateOrderFromCartStrategy"
+		  class="br.com.ey.core.strategies.impl.DefaultEyB2BCreateOrderFromCartStrategy"
+		  parent="createOrderFromCartStrategy">
+		<property name="businessProcessStrategies">
+			<list>
+				<ref bean="b2bApprovalBusinessProcessStrategy"/>
+				<ref bean="b2bQuoteBusinessProcessStrategy"/>
+				<ref bean="b2bQuoteApprovalBusinessProcessStrategy"/>
+			</list>
+		</property>
+	</bean>
+
+	<alias alias="b2bOrderService" name="defaultB2BOrderService"/>
+	<bean id="defaultB2BOrderService" class="de.hybris.platform.b2b.services.impl.DefaultB2BOrderService" parent="defaultOrderService">
+		<property name="baseDao" ref="baseDao"/>
+		<property name="b2bOrderDao" ref="b2bOrderDao"/>
+		<property name="b2bUnitService" ref="b2bUnitService"/>
+		<property name="b2bCustomerService" ref="b2bCustomerService"/>
+		<property name="i18nService" ref="defaultI18NService"/>
+		<property name="userService" ref="defaultUserService"/>
+		<property name="b2bCreateOrderFromCartStrategy" ref="defaultEyB2BCreateOrderFromCartStrategy"/>
+		<property name="cartToOrderCronJobModelDao" ref="defaultCartToOrderCronJobModelDao"/>
+		<property name="searchRestrictionService" ref="searchRestrictionService"/>
+		<property name="workflowProcessingService" ref="workflowProcessingService"/>
+	</bean>
+
+
 </beans>

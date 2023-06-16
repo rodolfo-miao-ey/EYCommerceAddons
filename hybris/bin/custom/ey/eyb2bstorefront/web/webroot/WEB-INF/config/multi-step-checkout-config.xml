@@ -349,7 +349,7 @@
 	</bean>
 
 	<bean id="REDIRECT_TO_SUMMARY" class="java.lang.String">
-		<constructor-arg value="redirect:/checkout/multi/summary/view"/>
+		<constructor-arg value="redirect:/checkout/multi/braspag/summary/view"/>
 	</bean>
 
 </beans>
